@@ -14,12 +14,12 @@ export async function GET() {
     let keys;
 
     if (ctx.role === "manager") {
-      keys = adapter.all(
+      keys = await adapter.all(
         `SELECT id, name, isActive, lastUsedAt, createdAt, userId FROM apiKeys WHERE teamId = ? ORDER BY createdAt DESC`,
         [ctx.teamId]
       );
     } else {
-      keys = adapter.all(
+      keys = await adapter.all(
         `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE userId = ? ORDER BY createdAt DESC`,
         [ctx.userId]
       );
@@ -50,13 +50,13 @@ export async function POST(request) {
     const adapter = await getAdapter();
 
     // Check key quota
-    const settings = adapter.get(
+    const settings = await adapter.get(
       `SELECT maxKeysPerDeveloper FROM teamSettings WHERE teamId = ?`,
       [ctx.teamId]
     );
     const maxKeys = settings?.maxKeysPerDeveloper || 5;
 
-    const existing = adapter.all(
+    const existing = await adapter.all(
       `SELECT COUNT(*) as count FROM apiKeys WHERE userId = ? AND isActive = 1`,
       [ctx.userId]
     );
@@ -66,7 +66,7 @@ export async function POST(request) {
     }
 
     // Check name uniqueness
-    const dup = adapter.get(
+    const dup = await adapter.get(
       `SELECT id FROM apiKeys WHERE userId = ? AND name = ? AND isActive = 1`,
       [ctx.userId, name]
     );
@@ -79,7 +79,7 @@ export async function POST(request) {
     const keyId = uuidv4();
     const now = new Date().toISOString();
 
-    adapter.run(
+    await adapter.run(
       `INSERT INTO apiKeys(id, keyHash, name, teamId, userId, isActive, createdAt) VALUES(?, ?, ?, ?, ?, 1, ?)`,
       [keyId, keyHash, name, ctx.teamId, ctx.userId, now]
     );

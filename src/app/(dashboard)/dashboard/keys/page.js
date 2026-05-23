@@ -250,7 +250,7 @@ export default function KeysPage() {
               <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">warning</span>
               <div>
                 <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
-                  Copy this key now — you won't see it again!
+                  Copy this key now — you won&apos;t see it again!
                 </p>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                   For security, the full key is only shown once. Store it safely.
@@ -283,7 +283,7 @@ export default function KeysPage() {
 
           <div className="flex justify-end pt-2">
             <Button onClick={() => setShowNewKeyModal(false)}>
-              I've Saved My Key
+              I&apos;ve Saved My Key
             </Button>
           </div>
         </div>

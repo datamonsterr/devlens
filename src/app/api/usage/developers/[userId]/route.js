@@ -9,9 +9,9 @@ export async function GET(request, { params }) {
     const ctx = await requireManagerContext();
     const { userId } = await params;
     const db = await getAdapter();
-    const user = db.get(`SELECT id FROM users WHERE id = ? AND teamId = ?`, [userId, ctx.teamId]);
+    const user = await db.get(`SELECT id FROM users WHERE id = ? AND teamId = ?`, [userId, ctx.teamId]);
     if (!user) return NextResponse.json({ error: "Developer not found" }, { status: 404 });
-    const rows = db.all(
+    const rows = await db.all(
       `SELECT timestamp, provider, model, endpoint, status, promptTokens, completionTokens, cost FROM usageHistory WHERE teamId = ? AND userId = ? ORDER BY timestamp DESC LIMIT 200`,
       [ctx.teamId, userId]
     );

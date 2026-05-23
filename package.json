@@ -11,7 +11,12 @@
     "build:bun": "bun --bun next build --webpack",
     "start:bun": "bun ./.next/standalone/server.js",
     "lint": "npx eslint src/ --ext .js,.jsx,.ts,.tsx 2>&1 || true",
-    "test": "cd tests && npm test"
+    "test": "cd tests && npm test",
+    "turso:preflight": "node scripts/turso-migrate.mjs preflight",
+    "turso:schema": "node scripts/turso-migrate.mjs schema-apply",
+    "turso:export": "node scripts/turso-migrate.mjs export-sqlite",
+    "turso:import": "node scripts/turso-migrate.mjs import-turso",
+    "turso:verify": "node scripts/turso-migrate.mjs verify"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.4.1",
@@ -19,6 +24,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@libsql/client": "^0.17.3",
     "@monaco-editor/react": "^4.7.0",
     "@xyflow/react": "^12.10.1",
     "confbox": "^0.2.4",

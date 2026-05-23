@@ -36,7 +36,7 @@ export async function GET(request) {
     const adapter = await getAdapter();
 
     // Aggregate stats
-    const agg = adapter.get(
+    const agg = await adapter.get(
       `SELECT
         COUNT(*) as totalRequests,
         COALESCE(SUM(promptTokens), 0) as totalPromptTokens,
@@ -49,13 +49,13 @@ export async function GET(request) {
     );
 
     // Active developers count
-    const activeDevs = adapter.get(
+    const activeDevs = await adapter.get(
       `SELECT COUNT(DISTINCT userId) as count FROM usageHistory WHERE teamId = ? AND timestamp >= ? AND userId IS NOT NULL`,
       [ctx.teamId, start]
     );
 
     // Per-developer breakdown
-    const developerRows = adapter.all(
+    const developerRows = await adapter.all(
       `SELECT
         uh.userId,
         u.clerkUserId,
@@ -73,7 +73,7 @@ export async function GET(request) {
     );
 
     // Per-model cost distribution
-    const modelRows = adapter.all(
+    const modelRows = await adapter.all(
       `SELECT
         model,
         provider,
@@ -89,7 +89,7 @@ export async function GET(request) {
     );
 
     // Per-provider volume
-    const providerRows = adapter.all(
+    const providerRows = await adapter.all(
       `SELECT
         provider,
         COUNT(*) as requests,
@@ -106,7 +106,7 @@ export async function GET(request) {
     // Time-series chart data (daily buckets)
     const chartData = await getChartData(adapter, ctx.teamId, start, bucketCount);
 
-    const recentActivity = adapter.all(
+    const recentActivity = await adapter.all(
       `SELECT timestamp, userId, provider, model, endpoint, status, promptTokens, completionTokens, cost
        FROM usageHistory WHERE teamId = ? AND timestamp >= ? ORDER BY timestamp DESC LIMIT 25`,
       [ctx.teamId, start]
@@ -164,7 +164,7 @@ async function getChartData(adapter, teamId, startDate, bucketCount) {
   const today = new Date();
   const endDate = today.toISOString();
 
-  const rows = adapter.all(
+  const rows = await adapter.all(
     `SELECT timestamp, promptTokens, completionTokens, cost FROM usageHistory
      WHERE teamId = ? AND timestamp >= ?
      ORDER BY timestamp ASC`,

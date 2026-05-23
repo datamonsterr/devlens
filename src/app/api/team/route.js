@@ -9,7 +9,7 @@ export async function GET() {
     const ctx = await requireTeamContext();
 
     const adapter = await getAdapter();
-    const team = adapter.get(
+    const team = await adapter.get(
       `SELECT id, name, clerkOrgId, rtkPool, createdAt, updatedAt FROM teams WHERE id = ?`,
       [ctx.teamId]
     );
@@ -37,10 +37,10 @@ export async function PUT(request) {
     const now = new Date().toISOString();
 
     if (body.name) {
-      adapter.run(`UPDATE teams SET name = ?, updatedAt = ? WHERE id = ?`, [body.name, now, ctx.teamId]);
+      await adapter.run(`UPDATE teams SET name = ?, updatedAt = ? WHERE id = ?`, [body.name, now, ctx.teamId]);
     }
 
-    const team = adapter.get(
+    const team = await adapter.get(
       `SELECT id, name, clerkOrgId, rtkPool, createdAt, updatedAt FROM teams WHERE id = ?`,
       [ctx.teamId]
     );

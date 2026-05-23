@@ -4,6 +4,19 @@ import { ensureDirs, DATA_FILE } from "./paths.js";
 if (!global._dbAdapter) global._dbAdapter = { instance: null, initPromise: null, logged: false };
 const state = global._dbAdapter;
 
+async function tryLibsql() {
+  if (!process.env.TURSO_DATABASE_URL) return null;
+  try {
+    const { createLibsqlAdapter } = await import("./adapters/libsqlAdapter.js");
+    return await createLibsqlAdapter({
+      url: process.env.TURSO_DATABASE_URL,
+      authToken: process.env.TURSO_AUTH_TOKEN,
+    });
+  } catch (e) {
+    throw new Error(`[DB] libSQL unavailable while TURSO_DATABASE_URL is configured: ${e.message}`);
+  }
+}
+
 async function tryBunSqlite() {
   // Bun runtime only — built-in, no install needed
   if (!process.versions.bun) return null;
@@ -53,18 +66,30 @@ async function trySqlJs() {
 }
 
 async function initAdapter() {
-  ensureDirs();
   // Order per runtime:
+  //   Turso: libSQL when TURSO_DATABASE_URL exists
   //   Bun:  bun:sqlite → sql.js
   //   Node: better-sqlite3 → node:sqlite (≥22.5) → sql.js
-  let adapter = await tryBunSqlite();
+  let adapter = await tryLibsql();
+  if (adapter) {
+    if (!state.logged) {
+      console.log(`[DB] Driver: libsql | location: ${process.env.TURSO_DATABASE_URL}`);
+      state.logged = true;
+    }
+    const { runMigrationOnce } = await import("./migrate.js");
+    await runMigrationOnce(adapter);
+    return adapter;
+  }
+  ensureDirs();
+  if (!adapter) adapter = await tryBunSqlite();
   if (!adapter) adapter = await tryBetterSqlite();
   if (!adapter) adapter = await tryNodeSqlite();
   if (!adapter) adapter = await trySqlJs();
   if (!adapter) throw new Error("[DB] No SQLite driver available (bun/better/node/sql.js all failed)");
 
   if (!state.logged) {
-    console.log(`[DB] Driver: ${adapter.driver} | file: ${DATA_FILE}`);
+    const location = adapter.driver === "libsql" ? process.env.TURSO_DATABASE_URL : DATA_FILE;
+    console.log(`[DB] Driver: ${adapter.driver} | location: ${location}`);
     state.logged = true;
   }
 

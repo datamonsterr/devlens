@@ -97,7 +97,6 @@ export function parseMarkdown(content) {
   return content;
 }
 
-// Unicode-aware slugify: keeps letters/numbers from any language (Vietnamese, Chinese, Japanese, etc.)
 export function slugify(text) {
   return text
     .toLowerCase()

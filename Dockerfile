@@ -21,7 +21,7 @@ WORKDIR /app
 LABEL org.opencontainers.image.title="devlens"
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=20261
 ENV HOSTNAME=0.0.0.0
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV DATA_DIR=/app/data
@@ -40,7 +40,7 @@ RUN apk --no-cache upgrade && apk --no-cache add su-exec && \
   printf '#!/bin/sh\nchown -R node:node /app/data /app/data-home 2>/dev/null\nexec su-exec node "$@"\n' > /entrypoint.sh && \
   chmod +x /entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 20261
 
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["node", "server.js"]

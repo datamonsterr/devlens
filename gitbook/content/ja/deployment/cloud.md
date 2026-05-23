@@ -130,7 +130,7 @@ COPY . .
 RUN npm run build
 
 # Expose ports
-EXPOSE 3000 20128
+EXPOSE 3000 20261
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -152,8 +152,8 @@ docker build -t 9router .
 # コンテナを実行
 docker run -d \
   --name 9router \
-  -p 3000:3000 \
-  -p 20128:20128 \
+  -p 20261:20261 \
+  -p 20261:20261 \
   -e JWT_SECRET="your-secure-secret-change-this" \
   -e INITIAL_PASSWORD="your-secure-password" \
   -v 9router-data:/app/data \
@@ -172,8 +172,8 @@ services:
     build: .
     container_name: 9router
     ports:
-      - "3000:3000"
-      - "20128:20128"
+      - "20261:20261"
+      - "20261:20261"
     environment:
       - NODE_ENV=production
       - JWT_SECRET=your-secure-secret-change-this
@@ -249,7 +249,7 @@ server {
 
     # Proxy to 9Router
     location / {
-        proxy_pass http://localhost:3000;
+        proxy_pass http://localhost:20261;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -266,7 +266,7 @@ server {
 
     # API endpoint
     location /v1 {
-        proxy_pass http://localhost:20128;
+        proxy_pass http://localhost:20261;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -335,7 +335,7 @@ sudo ufw allow 443/tcp
 
 # リバースプロキシを使用しない場合、9Routerポートを許可
 sudo ufw allow 3000/tcp
-sudo ufw allow 20128/tcp
+sudo ufw allow 20261/tcp
 
 # ファイアウォールを有効化
 sudo ufw enable
@@ -353,8 +353,8 @@ sudo ufw deny 3000/tcp
 SSHトンネル経由でダッシュボードにアクセス:
 
 ```bash
-ssh -L 3000:localhost:3000 user@your-server.com
-# ブラウザで http://localhost:3000 を開く
+ssh -L 20261:localhost:20261 user@your-server.com
+# ブラウザで http://localhost:20261 を開く
 ```
 
 ### 4. 定期的な更新
@@ -418,7 +418,7 @@ htop
 df -h
 
 # ネットワーク接続
-netstat -tulpn | grep -E '3000|20128'
+netstat -tulpn | grep -E '3000|20261'
 ```
 
 ---
@@ -432,8 +432,8 @@ netstat -tulpn | grep -E '3000|20128'
 pm2 logs 9router
 
 # ポートが使用中か確認
-sudo lsof -i :3000
-sudo lsof -i :20128
+sudo lsof -i :20261
+sudo lsof -i :20261
 
 # 環境変数を確認
 pm2 env 9router

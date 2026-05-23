@@ -200,8 +200,8 @@ npm start
 ```bash
 npm install -g 9router
 9router
-→ 仪表盘: http://localhost:3000
-→ API: http://localhost:20128/v1
+→ 仪表盘: http://localhost:20261
+→ API: http://localhost:20261/v1
 ```
 
 ### VPS/云
@@ -221,7 +221,7 @@ npm start
 ```bash
 docker build -t 9router .
 docker run -d \
-  -p 3000:3000 \
+  -p 20261:20261 \
   -e JWT_SECRET="your-secret" \
   -v 9router-data:/app/data \
   9router
@@ -305,7 +305,7 @@ docker pull 9router:latest
 docker stop 9router
 docker rm 9router
 docker run -d \
-  -p 3000:3000 \
+  -p 20261:20261 \
   -v 9router-data:/app/data \
   9router:latest
 ```

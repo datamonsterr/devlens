@@ -250,7 +250,7 @@ function EmbeddingExampleCard({ providerId, customAlias }) {
               value={endpoint}
               onChange={(e) => useTunnel ? setTunnelEndpoint(e.target.value) : setLocalEndpoint(e.target.value)}
               className="w-full min-w-0 flex-1 px-3 py-1.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:border-primary font-mono"
-              placeholder="http://localhost:3000"
+              placeholder="http://localhost:20261"
             />
             {/* Tunnel toggle — only show if tunnel URL is available */}
             {tunnelEndpoint && (

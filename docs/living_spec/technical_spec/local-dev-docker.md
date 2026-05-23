@@ -40,4 +40,4 @@ Vercel production must use Turso/libSQL and must not depend on local `DATA_DIR` 
 
 ## 9router change
 
-Existing `20128` references must migrate to `20261` to avoid current 9router port range.
+Existing `20261` references must migrate to `20261` to avoid current 9router port range.

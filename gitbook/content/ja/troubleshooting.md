@@ -132,11 +132,11 @@
 
 ## Connection Refused
 
-**問題:** 「ECONNREFUSED」または「Cannot connect to localhost:20128」。
+**問題:** 「ECONNREFUSED」または「Cannot connect to localhost:20261」。
 
 **原因:**
 - 9Routerが起動していない
-- ポート20128がブロックされている
+- ポート20261がブロックされている
 - ファイアウォールが接続をブロック
 
 **解決策:**
@@ -145,21 +145,21 @@
    ```bash
    9router
    ```
-   ダッシュボードがhttp://localhost:3000で開くはず
+   ダッシュボードがhttp://localhost:20261で開くはず
 
-2. **ポート20128を確認:**
+2. **ポート20261を確認:**
    ```bash
    # ポートがリッスンしているか確認
-   lsof -i :20128
+   lsof -i :20261
    
    # またはWindowsで
-   netstat -ano | findstr :20128
+   netstat -ano | findstr :20261
    ```
 
 3. **ファイアウォールを確認:**
    - macOS: システム設定 → ネットワーク → ファイアウォール
    - Windows: Windows Defenderファイアウォール → アプリを許可
-   - Linux: `sudo ufw allow 20128`
+   - Linux: `sudo ufw allow 20261`
 
 4. **クラウドエンドポイントを使用:**
    localhostが動作しない場合(例: Cursor IDE):
@@ -171,7 +171,7 @@
 
 ## ダッシュボードが開かない
 
-**問題:** ダッシュボードがhttp://localhost:3000で読み込まれない。
+**問題:** ダッシュボードがhttp://localhost:20261で読み込まれない。
 
 **原因:**
 - ポート3000がすでに使用中
@@ -186,16 +186,16 @@
    ps aux | grep 9router
    
    # ポート3000を確認
-   lsof -i :3000
+   lsof -i :20261
    ```
 
 2. **競合するプロセスを終了:**
    ```bash
    # macOS/Linux
-   lsof -ti:3000 | xargs kill -9
+   lsof -ti:20261 | xargs kill -9
    
    # Windows
-   netstat -ano | findstr :3000
+   netstat -ano | findstr :20261
    taskkill /PID <PID> /F
    ```
 
@@ -243,7 +243,7 @@
 
 3. **利用可能なモデルを一覧表示:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer your-api-key"
    ```
 
@@ -338,7 +338,7 @@
 
 4. **APIキーをテスト:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer 9r_your_key"
    ```
 

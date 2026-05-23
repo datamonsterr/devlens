@@ -107,7 +107,7 @@
 
 - [x] 11.1 Rewrite `README.md` as Devlens overview with features, setup, and architecture links
 - [x] 11.9 Create `CONTEXT.md` with domain glossary (terms: Team, Manager, Developer, RTK Pool, Combo, Provider Connection, API Key)
-- [x] 12.1 Create `docker-compose.yml` with `app` service (Next.js on port 20128) and named volume for SQLite data
+- [x] 12.1 Create `docker-compose.yml` with `app` service (Next.js on port 20261) and named volume for SQLite data
 - [ ] 12.2 Update `Dockerfile` for Devlens: remove MITM copies, update labels, adjust DATA_DIR path
 - [ ] 12.3 Add `.dockerignore` entries for removed modules
 - [ ] 12.4 Test `docker compose up` — verify app starts, Clerk auth works, data persists across restarts

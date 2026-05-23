@@ -3,22 +3,22 @@ services:
     build: .
     container_name: devlens
     ports:
-      - "3000:3000"
+      - "20261:20261"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=20261
       - HOSTNAME=0.0.0.0
       - DATA_DIR=/app/data
       - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:-pk_test_placeholder}
       - CLERK_SECRET_KEY=${CLERK_SECRET_KEY:-sk_test_placeholder}
       - CLERK_WEBHOOK_SECRET=${CLERK_WEBHOOK_SECRET:-}
-      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL:-http://localhost:20261}
       - JWT_SECRET=${JWT_SECRET:-change-me}
     volumes:
       - devlens_data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:3000/api/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:20261/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

@@ -156,7 +156,7 @@ describe("PR #1175 - porcelain regex fix edge cases", () => {
 describe("PR #1175 - false positive risks", () => {
   it("generic app log with 'ERROR:' triggers buildOutput (potential false positive)", () => {
     const input = [
-      "2026-05-16 10:00:00 INFO Server started on port 3000",
+      "2026-05-16 10:00:00 INFO Server started on port 20261",
       "2026-05-16 10:00:05 INFO Request received: GET /api/users",
       "ERROR: Database connection timeout",
       "2026-05-16 10:00:10 INFO Retrying connection",

@@ -8,12 +8,19 @@ flowchart LR
   Clerk --> TeamContext[Team Context]
   V1 --> ApiKey[API Key Auth]
   ApiKey --> TeamContext
-  TeamContext --> SQLite[(SQLite)]
+  TeamContext --> DB[(Turso/libSQL or local SQLite)]
   TeamContext --> Router[open-sse router]
   Router --> Providers[Upstream Providers]
   Router --> Usage[Usage + RTK Accounting]
-  Usage --> SQLite
+  Usage --> DB
 ```
+
+## Database runtime
+
+- Vercel production: `TURSO_DATABASE_URL` selects Turso/libSQL durable DB.
+- Local dev/self-hosted fallback: absent `TURSO_DATABASE_URL` selects local SQLite under `DATA_DIR`.
+- Startup schema migrations coordinate with Turso-backed lock so concurrent cold starts do not race DDL.
+- Local SQLite to Turso data migration is operator-run script workflow, not automatic startup import.
 
 ## Flow
 

@@ -19,6 +19,12 @@
       "skillPath": "skills/clerk-auth/SKILL.md",
       "computedHash": "95a768b8d2fca5ecfa0652d6721f5862bd7b3a8709bfa95faa6b63061803c02c"
     },
+    "cli-mastery": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/cli-mastery/SKILL.md",
+      "computedHash": "adc13add373b57d92d9e74dc7b864636ad48b4be3c3b600269440ab71c70b30d"
+    },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
@@ -36,6 +42,24 @@
       "sourceType": "github",
       "skillPath": "skills/public/find-skills/SKILL.md",
       "computedHash": "202da6ad9e3c65949fa70371e89b1f55a1f5bd6d11b20b4491af17de495a0caf"
+    },
+    "gh-cli": {
+      "source": "trailofbits/skills",
+      "sourceType": "github",
+      "skillPath": ".codex/skills/gh-cli/SKILL.md",
+      "computedHash": "1ac21e18a8f1862c5d72b1b02df2dbc94e569aa69d27d3cb6a1075c8cd751379"
+    },
+    "git-rebase": {
+      "source": "pedronauck/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mine/git-rebase/SKILL.md",
+      "computedHash": "e9597a749af2703293cce2221aa58026ad7066e50e1a407422586866b94f25ec"
+    },
+    "git-worktree-manager": {
+      "source": "d-o-hub/rust-self-learning-memory",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/git-worktree-manager/SKILL.md",
+      "computedHash": "43f1d4c3f4ff2878367588afed7dab56a78a3f4be997ac5b354ed26543836a3d"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -78,6 +102,12 @@
       "sourceType": "github",
       "skillPath": ".claude/skills/sqlite/SKILL.md",
       "computedHash": "60d951d25d17e9310d96bafa0fc65e13e6009a637ee316c8dfa1add55888c9cb"
+    },
+    "superpowers-openspec": {
+      "source": "tielei60/superpowers-openspec",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b65c66722794435c942816f62d4c4e084bfc635a2b19afc9dea54ea3d04dec48"
     },
     "tdd": {
       "source": "mattpocock/skills",

@@ -17,7 +17,9 @@ Devlens is centralized B2B platform for provisioning and monitoring AI access ac
 - Clerk Organizations become Teams.
 - Clerk session protects dashboard/management APIs.
 - API Keys protect `/v1/*`.
-- SQLite stores Team-scoped relational data.
+- SQLite semantics store Team-scoped relational data.
+- Vercel production uses Turso/libSQL when `TURSO_DATABASE_URL` is present.
+- Local SQLite remains development/self-hosted fallback when Turso env is absent.
 - Managers configure Team resources.
 - Developers consume curated API access.
 

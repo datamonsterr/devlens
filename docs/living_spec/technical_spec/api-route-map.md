@@ -22,6 +22,10 @@
 - `/dashboard/console-log`: role-filtered sanitized logs.
 - `/dashboard/endpoint`: Team cloudflared endpoint.
 
+## Management API
+
+- `/api/team`: server-resolved Team context for signed-in Clerk Organization session.
+
 ## Compatibility API
 
 - `/v1/*`: OpenAI-compatible Team-routed API.

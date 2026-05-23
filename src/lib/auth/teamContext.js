@@ -1,33 +1,78 @@
 import { getAdapter } from "@/lib/db/driver";
 import { auth } from "@clerk/nextjs/server";
+import { v4 as uuidv4 } from "uuid";
+
+function toTeamRole(orgRole, sessionClaims) {
+  const metadataRole = sessionClaims?.public_metadata?.role || sessionClaims?.unsafe_metadata?.role;
+  if (metadataRole === "manager" || metadataRole === "developer") return metadataRole;
+  if (orgRole === "org:admin") return "manager";
+  return "developer";
+}
+
+async function ensureTeam(adapter, orgId, sessionClaims) {
+  const existing = await adapter.get(
+    `SELECT id, name, clerkOrgId, rtkPool FROM teams WHERE clerkOrgId = ?`,
+    [orgId]
+  );
+  if (existing) return existing;
+
+  const teamId = uuidv4();
+  const now = new Date().toISOString();
+  const teamName = sessionClaims?.org_name || sessionClaims?.organization?.name || "My Team";
+  await adapter.run(
+    `INSERT INTO teams(id, name, clerkOrgId, rtkPool, createdAt, updatedAt) VALUES(?, ?, ?, 0, ?, ?)`,
+    [teamId, teamName, orgId, now, now]
+  );
+  return { id: teamId, name: teamName, clerkOrgId: orgId, rtkPool: 0 };
+}
+
+async function ensureUser(adapter, clerkUserId, teamId, role) {
+  const existing = await adapter.get(
+    `SELECT id, role, isActive FROM users WHERE clerkUserId = ? AND teamId = ?`,
+    [clerkUserId, teamId]
+  );
+  if (existing) return existing;
+
+  const globalUser = await adapter.get(
+    `SELECT id FROM users WHERE clerkUserId = ?`,
+    [clerkUserId]
+  );
+  const now = new Date().toISOString();
+  if (globalUser) {
+    await adapter.run(
+      `UPDATE users SET teamId = ?, role = ?, isActive = 1, updatedAt = ? WHERE clerkUserId = ?`,
+      [teamId, role, now, clerkUserId]
+    );
+    return { id: globalUser.id, role, isActive: 1 };
+  }
+
+  const userId = uuidv4();
+  await adapter.run(
+    `INSERT INTO users(id, clerkUserId, teamId, role, isActive, createdAt, updatedAt) VALUES(?, ?, ?, ?, 1, ?, ?)`,
+    [userId, clerkUserId, teamId, role, now, now]
+  );
+  return { id: userId, role, isActive: 1 };
+}
 
 export async function getTeamContext() {
-  const { userId, orgId, sessionClaims } = await auth();
+  const { userId, orgId, orgRole, sessionClaims } = await auth();
   if (!userId || !orgId) return null;
   const memberships = sessionClaims?.orgs || sessionClaims?.organizations || null;
   if (Array.isArray(memberships) && memberships.length !== 1) return null;
 
   const adapter = await getAdapter();
-  const team = await adapter.get(
-    `SELECT id, name, clerkOrgId, rtkPool FROM teams WHERE clerkOrgId = ?`,
-    [orgId]
-  );
-
-  if (!team) return null;
-
-  const user = await adapter.get(
-    `SELECT id, role, isActive FROM users WHERE clerkUserId = ? AND teamId = ?`,
-    [userId, team.id]
-  );
+  const team = await ensureTeam(adapter, orgId, sessionClaims);
+  const role = toTeamRole(orgRole, sessionClaims);
+  const user = await ensureUser(adapter, userId, team.id, role);
 
   return {
     teamId: team.id,
     teamName: team.name,
     clerkOrgId: team.clerkOrgId,
     rtkPool: team.rtkPool,
-    userId: user?.id || null,
-    role: user?.role || null,
-    isActive: user?.isActive === 1,
+    userId: user.id,
+    role: user.role,
+    isActive: user.isActive === 1,
   };
 }
 

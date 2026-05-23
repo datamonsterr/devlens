@@ -1,12 +1,16 @@
-import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
+"use client";
+
+import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
 
 export default function OnboardingPage() {
+  const { isSignedIn } = useUser();
+
   return (
     <main className="min-h-screen flex items-center justify-center bg-bg p-6">
       <div className="w-full max-w-3xl space-y-8 text-center">
         <div className="flex justify-end">
-          <Show when="signed-out">
+          {!isSignedIn && (
             <div className="flex items-center gap-3">
               <SignInButton>
                 <button className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-text-main hover:border-primary">
@@ -19,10 +23,10 @@ export default function OnboardingPage() {
                 </button>
               </SignUpButton>
             </div>
-          </Show>
-          <Show when="signed-in">
+          )}
+          {isSignedIn && (
             <UserButton />
-          </Show>
+          )}
         </div>
         <div>
           <h1 className="text-4xl font-semibold text-text-main">You&apos;re with Devlens</h1>

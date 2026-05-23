@@ -35,7 +35,7 @@ function throwIfCancelled(token, label) {
   if (token.cancelled) throw new Error(`${label} cancelled`);
 }
 
-export async function enableTunnel(localPort = 20128) {
+export async function enableTunnel(localPort = 20261) {
   console.log(`[Tunnel] enable start (port=${localPort})`);
   tunnelSvc.cancelToken = { cancelled: false };
   tunnelSvc.activeLocalPort = localPort;

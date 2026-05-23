@@ -19,7 +19,7 @@ flowchart LR
 
 - Vercel production: `TURSO_DATABASE_URL` selects Turso/libSQL durable DB.
 - Local dev/self-hosted fallback: absent `TURSO_DATABASE_URL` selects local SQLite under `DATA_DIR`.
-- Startup schema migrations coordinate with Turso-backed lock so concurrent cold starts do not race DDL.
+- Target: startup schema migrations coordinate with Turso-backed lock so concurrent cold starts do not race DDL; current code still lacks lock implementation.
 - Local SQLite to Turso data migration is operator-run script workflow, not automatic startup import.
 
 ## Flow

@@ -11,3 +11,4 @@ Vercel deployments SHALL NOT depend on persistent local `DATA_DIR` database file
 #### Scenario: Vercel serverless cold starts concurrently
 - **WHEN** multiple Vercel instances cold start after a deploy
 - **THEN** startup schema migration coordination prevents concurrent DDL from causing partial migration state or failed requests
+- **CURRENT IMPLEMENTATION GAP** `src/lib/db/migrate.js` does not yet implement this coordination

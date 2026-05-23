@@ -17,4 +17,4 @@ Do not bake real Turso tokens into Docker images or committed env files. Use loc
 
 Vercel production must use Turso/libSQL and must not depend on local `DATA_DIR` persistence. Data migration from local SQLite to Turso is operator-run with scripts, not automatic app startup behavior.
 
-Port guidance: Devlens dev ports should stay in `2026x` range for local agent work.
+Port guidance: Devlens dev ports should stay in `2026x` range for local agent work. Current package scripts and `.env.example` still reference `20128`; change-needed residue.

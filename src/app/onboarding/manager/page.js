@@ -8,7 +8,7 @@ export default function ManagerOnboardingPage() {
           <h1 className="text-3xl font-semibold text-text-main">Create team</h1>
           <p className="text-text-muted">Team managers create the Clerk Organization for Devlens.</p>
         </div>
-        <SignUp unsafeMetadata={{ role: "manager" }} afterSignUpUrl="/dashboard" />
+        <SignUp routing="hash" unsafeMetadata={{ role: "manager" }} afterSignUpUrl="/dashboard" />
       </div>
     </main>
   );

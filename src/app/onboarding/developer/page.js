@@ -8,7 +8,7 @@ export default function DeveloperOnboardingPage() {
           <h1 className="text-3xl font-semibold text-text-main">Join team</h1>
           <p className="text-text-muted">Use your manager&apos;s Clerk Organization invitation.</p>
         </div>
-        <SignIn afterSignInUrl="/dashboard" />
+        <SignIn routing="hash" afterSignInUrl="/dashboard" />
       </div>
     </main>
   );

@@ -1,0 +1,95 @@
+import { NextResponse } from "next/server";
+import { requireTeamContext } from "@/lib/auth";
+import { getAdapter } from "@/lib/db/driver";
+import { generateApiKey, hashApiKey } from "@/lib/apiKeyUtils";
+import { v4 as uuidv4 } from "uuid";
+
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const ctx = await requireTeamContext();
+
+    const adapter = await getAdapter();
+    let keys;
+
+    if (ctx.role === "manager") {
+      keys = adapter.all(
+        `SELECT id, name, isActive, lastUsedAt, createdAt, userId FROM apiKeys WHERE teamId = ? ORDER BY createdAt DESC`,
+        [ctx.teamId]
+      );
+    } else {
+      keys = adapter.all(
+        `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE userId = ? ORDER BY createdAt DESC`,
+        [ctx.userId]
+      );
+    }
+
+    return NextResponse.json({ keys: keys.map((k) => ({ ...k, isActive: k.isActive === 1 })) });
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function POST(request) {
+  try {
+    const ctx = await requireTeamContext();
+
+    if (ctx.role !== "developer") {
+      return NextResponse.json({ error: "Only developers can create API keys" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { name } = body;
+
+    if (!name) {
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    const adapter = await getAdapter();
+
+    // Check key quota
+    const settings = adapter.get(
+      `SELECT maxKeysPerDeveloper FROM teamSettings WHERE teamId = ?`,
+      [ctx.teamId]
+    );
+    const maxKeys = settings?.maxKeysPerDeveloper || 5;
+
+    const existing = adapter.all(
+      `SELECT COUNT(*) as count FROM apiKeys WHERE userId = ? AND isActive = 1`,
+      [ctx.userId]
+    );
+
+    if (existing[0]?.count >= maxKeys) {
+      return NextResponse.json({ error: `API key limit reached (max ${maxKeys})` }, { status: 400 });
+    }
+
+    // Check name uniqueness
+    const dup = adapter.get(
+      `SELECT id FROM apiKeys WHERE userId = ? AND name = ? AND isActive = 1`,
+      [ctx.userId, name]
+    );
+    if (dup) {
+      return NextResponse.json({ error: "Key name already exists" }, { status: 400 });
+    }
+
+    const keyValue = generateApiKey();
+    const keyHash = hashApiKey(keyValue);
+    const keyId = uuidv4();
+    const now = new Date().toISOString();
+
+    adapter.run(
+      `INSERT INTO apiKeys(id, keyHash, name, teamId, userId, isActive, createdAt) VALUES(?, ?, ?, ?, ?, 1, ?)`,
+      [keyId, keyHash, name, ctx.teamId, ctx.userId, now]
+    );
+
+    return NextResponse.json(
+      { id: keyId, name, key: keyValue, createdAt: now },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof Response) throw error;
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

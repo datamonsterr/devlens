@@ -1,0 +1,50 @@
+# VCS
+.git
+**/.git
+
+# Editor
+.vscode
+**/.vscode
+
+# Dependencies and build output
+node_modules
+.next
+out
+build
+dist
+coverage
+
+# Runtime data and logs
+data
+logs
+
+# Removed modules (keep git history clean)
+cli/
+src/mitm/
+i18n/
+src/app/api/cli-tools/
+src/app/api/sync/
+src/app/api/cloud/
+gitbook/
+tests/
+README.zh-CN.md
+README.vi.md
+README.ja-JP.md
+CHANGELOG.md
+openspec/
+.agents/
+skills/
+.opencode/plans/
+
+# Local env files (inject at runtime via --env-file or -e)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

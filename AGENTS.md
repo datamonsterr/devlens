@@ -5,9 +5,9 @@ Project guidance for agents working in Devlens.
 ## MUST FOLLOW
 
 1. Use `grill-with-docs` when assigned tasks are complex.
-2. Always create aseparate worktree under `worktrees/` before doing implementation work.
+2. Always create a separate worktree under the project root `./worktrees/` before doing implementation work.
 3. Set up the project inside that worktree so it can run and be tested manually:
-   1. Create worktree, for example: `git worktree add worktrees/<task-name> -b <task-branch>`
+   1. Create worktree from the project root, for example: `git worktree add ./worktrees/<task-name> -b <task-branch>`
    2. Copy `.env` from the main worktree into the new worktree.
    3. Run `npm install` in the new worktree.
    4. Run project setup, build, lint, typecheck, and test commands needed for the task.

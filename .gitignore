@@ -13,6 +13,9 @@
 # testing
 /coverage
 
+# worktrees
+worktrees
+
 # next.js
 /.next/
 /.next-cli-build/

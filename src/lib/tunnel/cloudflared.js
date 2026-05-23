@@ -394,7 +394,7 @@ export async function spawnQuickTunnel(localPort, onUrlUpdate) {
 }
 
 // Kill cloudflared processes whose command line targets the given port (any host).
-// Boundary check ensures :20128 doesn't match :201280 or :202128.
+// Boundary check ensures the target port doesn't match longer port values.
 function killCloudflaredByPort(port) {
   if (!port) return;
   try {

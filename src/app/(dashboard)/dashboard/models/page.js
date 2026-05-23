@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Card, CardSkeleton, Input, Badge, Button } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 
-const MODEL_URL_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:20128";
+const MODEL_URL_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:20261";
 
 export default function ModelsPage() {
   const [data, setData] = useState(null);

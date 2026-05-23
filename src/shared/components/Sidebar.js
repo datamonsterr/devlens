@@ -52,8 +52,7 @@ const systemItems = [
 
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
-  const { isManager } = useRole();
-  const isDeveloper = !isManager;
+  const { isManager, isDeveloper } = useRole();
   const [mediaOpen, setMediaOpen] = useState(false);
   const [showShutdownModal, setShowShutdownModal] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);

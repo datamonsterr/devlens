@@ -1,0 +1,8 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["CONTEXT.md", "docs/"],
+  "permission": {
+    "edit": "allow",
+    "bash": "allow"
+  }
+}

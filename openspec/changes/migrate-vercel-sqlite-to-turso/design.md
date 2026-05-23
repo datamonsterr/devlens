@@ -85,11 +85,13 @@ The user supplied a Turso DB URL and token for setup. The token must be treated 
 
 **Alternatives considered**: Turso default everywhere. Rejected because every local dev setup would need cloud DB credentials. Require explicit driver choice. Rejected as unnecessary setup friction.
 
-### D9: App startup runs schema migrations only
+### D9: App startup runs schema migrations only with coordination
 
-**Rationale**: Schema migrations are safe to run on deploy when they are versioned/idempotent. Data import from local SQLite to Turso is operational and must remain a manual script workflow.
+**Rationale**: Schema migrations may run on deploy when they are versioned/idempotent and coordinated so concurrent Vercel cold starts do not race DDL or schema-version writes. Data import from local SQLite to Turso is operational and must remain a manual script workflow.
 
-**Alternatives considered**: No startup migrations. Rejected because deploys could run against stale schema. Startup schema plus data import. Rejected because serverless instances may not have source DB and reruns risk data corruption.
+**Concurrency plan**: The migration runner SHALL acquire a Turso-backed migration lock before applying pending migrations. A runner that cannot acquire the lock SHALL wait and re-check schema version, or fail safely before serving DB-dependent requests. The lock SHALL include owner and expiry fields so abandoned deploy attempts do not block later starts indefinitely. Migrations SHALL update schema version in the same transaction or guarded sequence as each migration step where libSQL supports it.
+
+**Alternatives considered**: No startup migrations. Rejected because deploys could run against stale schema. Startup schema plus data import. Rejected because serverless instances may not have source DB and reruns risk data corruption. Uncoordinated startup migrations. Rejected because multiple cold starts can race schema-version checks and DDL against one Turso database.
 
 ### D10: One production Turso database for now
 

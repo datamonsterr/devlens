@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Badge, Button } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
+import RoleGuard from "@/shared/components/RoleGuard";
 import { AI_PROVIDERS, getProvidersByKind } from "@/shared/constants/providers";
 
 function getEffectiveStatus(conn) {
@@ -144,6 +145,14 @@ function Section({ title, icon, kind, providers, connections, combos, onCreateCo
 }
 
 export default function WebProvidersPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <WebProvidersContent />
+    </RoleGuard>
+  );
+}
+
+function WebProvidersContent() {
   const router = useRouter();
   const [connections, setConnections] = useState([]);
   const [combos, setCombos] = useState([]);

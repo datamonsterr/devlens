@@ -701,12 +701,17 @@ function formatLogDate(date = new Date()) {
 // No-op: request log is now derived from usageHistory table on read.
 export async function appendRequestLog() {}
 
-export async function getRecentLogs(limit = 200) {
+export async function getRecentLogs(limit = 200, filter = {}) {
   try {
     const db = await getAdapter();
+    const conds = [];
+    const params = [];
+    if (filter.teamId) { conds.push("teamId = ?"); params.push(filter.teamId); }
+    if (filter.userId) { conds.push("userId = ?"); params.push(filter.userId); }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
     const rows = await db.all(
-      `SELECT timestamp, provider, model, connectionId, promptTokens, completionTokens, status, tokens FROM usageHistory ORDER BY id DESC LIMIT ?`,
-      [limit],
+      `SELECT timestamp, provider, model, connectionId, promptTokens, completionTokens, status, tokens FROM usageHistory ${where} ORDER BY id DESC LIMIT ?`,
+      [...params, limit],
     );
     if (!rows.length) return [];
 

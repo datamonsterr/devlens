@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRequestDetails } from "@/lib/db";
 import { getProviderNodes } from "@/lib/localDb";
 import { AI_PROVIDERS, getProviderByAlias } from "@/shared/constants/providers";
+import { requireManagerContext } from "@/lib/auth";
 
 /**
  * GET /api/usage/providers
@@ -9,6 +10,7 @@ import { AI_PROVIDERS, getProviderByAlias } from "@/shared/constants/providers";
  */
 export async function GET() {
   try {
+    await requireManagerContext();
     const { details } = await getRequestDetails({ pageSize: 9999 });
 
     // Extract unique providers

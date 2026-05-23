@@ -3,8 +3,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardSkeleton, Button, Input, Badge } from "@/shared/components";
 import { useRole } from "@/shared/hooks/useRole";
+import RoleGuard from "@/shared/components/RoleGuard";
 
 export default function PricingPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <PricingContent />
+    </RoleGuard>
+  );
+}
+
+function PricingContent() {
   const { isManager } = useRole();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);

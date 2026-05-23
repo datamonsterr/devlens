@@ -1,9 +1,33 @@
 import { getUsageStats, statsEmitter, getActiveRequests } from "@/lib/db";
+import { requireTeamContext } from "@/lib/auth";
+import { getAdapter } from "@/lib/db/driver";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request) {
+  let ctx;
+  try {
+    ctx = await requireTeamContext();
+  } catch {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
   const encoder = new TextEncoder();
+
+  if (ctx.role === "developer") {
+    const db = await getAdapter();
+    const row = db.get(
+      `SELECT COUNT(*) totalRequests, COALESCE(SUM(promptTokens), 0) totalPromptTokens, COALESCE(SUM(completionTokens), 0) totalCompletionTokens, COALESCE(SUM(cost), 0) totalCost FROM usageHistory WHERE teamId = ? AND userId = ?`,
+      [ctx.teamId, ctx.userId]
+    );
+    const stream = new ReadableStream({
+      start(controller) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify(row)}\n\n`));
+        controller.close();
+      },
+    });
+    return new Response(stream, { headers: { "Content-Type": "text/event-stream", "Cache-Control": "no-cache", Connection: "keep-alive" } });
+  }
   const state = { closed: false, keepalive: null, send: null, sendPending: null, cachedStats: null };
 
   const stream = new ReadableStream({

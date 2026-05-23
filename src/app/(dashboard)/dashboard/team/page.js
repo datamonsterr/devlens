@@ -2,8 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { Button, Card } from "@/shared/components";
+import RoleGuard from "@/shared/components/RoleGuard";
 
 export default function TeamPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <TeamContent />
+    </RoleGuard>
+  );
+}
+
+function TeamContent() {
   const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");

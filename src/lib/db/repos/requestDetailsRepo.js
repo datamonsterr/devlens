@@ -146,6 +146,8 @@ export async function getRequestDetails(filter = {}) {
   const conds = [];
   const params = [];
 
+  if (filter.teamId) { conds.push("json_extract(data, '$.teamId') = ?"); params.push(filter.teamId); }
+  if (filter.userId) { conds.push("json_extract(data, '$.userId') = ?"); params.push(filter.userId); }
   if (filter.provider) { conds.push("provider = ?"); params.push(filter.provider); }
   if (filter.model) { conds.push("model = ?"); params.push(filter.model); }
   if (filter.connectionId) { conds.push("connectionId = ?"); params.push(filter.connectionId); }

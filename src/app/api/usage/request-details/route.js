@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRequestDetails } from "@/lib/db";
+import { requireTeamContext } from "@/lib/auth";
 
 /**
  * GET /api/usage/request-details
@@ -7,6 +8,7 @@ import { getRequestDetails } from "@/lib/db";
  */
 export async function GET(request) {
   try {
+    const ctx = await requireTeamContext();
     const { searchParams } = new URL(request.url);
     
     const page = parseInt(searchParams.get("page")) || 1;
@@ -34,8 +36,10 @@ export async function GET(request) {
     
     const filter = {
       page,
-      pageSize
+      pageSize,
+      teamId: ctx.teamId,
     };
+    if (ctx.role === "developer") filter.userId = ctx.userId;
     
     if (provider) filter.provider = provider;
     if (model) filter.model = model;

@@ -1,7 +1,9 @@
 // Ensure proxyFetch is loaded to patch globalThis.fetch
 import "open-sse/index.js";
 
+import { NextResponse } from "next/server";
 import { getProviderConnectionById, updateProviderConnection } from "@/lib/localDb";
+import { requireManagerContext } from "@/lib/auth";
 import { getUsageForProvider } from "open-sse/services/usage.js";
 import { getExecutor } from "open-sse/executors/index.js";
 import { resolveConnectionProxyConfig } from "@/lib/network/connectionProxy";
@@ -102,9 +104,10 @@ async function refreshAndUpdateCredentials(connection, force = false, proxyOptio
 /**
  * GET /api/usage/[connectionId] - Get usage data for a specific connection
  */
-export async function GET(request, { params }) {
+export async function GET(req, { params }) {
   let connection;
   try {
+    await requireManagerContext();
     const { connectionId } = await params;
 
 

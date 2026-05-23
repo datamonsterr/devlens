@@ -16,6 +16,7 @@ import ConnectionRow from "./ConnectionRow";
 import AddApiKeyModal from "./AddApiKeyModal";
 import EditCompatibleNodeModal from "./EditCompatibleNodeModal";
 import AddCustomModelModal from "./AddCustomModelModal";
+import RoleGuard from "@/shared/components/RoleGuard";
 
 const ONE_BY_ONE_DELAY_MS = 1000;
 
@@ -865,6 +866,7 @@ export default function ProviderDetailPage() {
   };
 
   return (
+    <RoleGuard allowed={["manager"]}>
     <div className="flex min-w-0 flex-col gap-6 px-1 sm:gap-8 sm:px-0">
       {/* Header */}
       <div className="min-w-0">
@@ -1330,5 +1332,6 @@ export default function ProviderDetailPage() {
         variant="danger"
       />
     </div>
+    </RoleGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import { Card, Badge } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+import RoleGuard from "@/shared/components/RoleGuard";
 import {
   SKILLS,
   SKILLS_REPO_URL,
@@ -73,6 +74,14 @@ function SkillRow({ skill }) {
 }
 
 export default function SkillsPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <SkillsContent />
+    </RoleGuard>
+  );
+}
+
+function SkillsContent() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Card padding="md">

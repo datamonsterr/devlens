@@ -1,8 +1,25 @@
 # Local development and Docker
 
-Local development can run without Turso credentials. If `TURSO_DATABASE_URL` is unset, Devlens stores SQLite data under `DATA_DIR`.
+## Local port
 
-Use `DATA_DIR=/var/lib/devlens` in containers when local SQLite persistence is desired for development or self-hosted deployments. Mount that path as a volume.
+Use `20261` for Devlens local app unless task explicitly chooses another `2026x` port.
+
+Expected app URL:
+
+```text
+http://localhost:20261
+```
+
+## Development
+
+```bash
+npm install
+npm run dev
+```
+
+Local Clerk credentials live in `.env` or `.env.local`. Vercel production receives Clerk credentials from the Vercel integrated Clerk environment.
+
+Local development can run without Turso credentials. If `TURSO_DATABASE_URL` is unset, Devlens stores SQLite data under `DATA_DIR`.
 
 For Turso-backed local testing, set:
 
@@ -13,8 +30,14 @@ TURSO_AUTH_TOKEN=change-me
 
 `TURSO_DATABASE_URL` presence selects libSQL. `TURSO_AUTH_TOKEN` is passed when required by target URL. Turso mode does not rely on local SQLite files, WAL checkpoint timers, or local DB process signal handling.
 
-Do not bake real Turso tokens into Docker images or committed env files. Use local `.env`, orchestration secrets, or Vercel env vars.
+Do not bake real Clerk keys or Turso tokens into Docker images or committed env files. Use local `.env`, orchestration secrets, Vercel integrated Clerk env vars, or Vercel env vars.
+
+## Docker
+
+Docker Compose should run one Next.js app service with mounted SQLite data volume for development or self-hosted deployments. Use `DATA_DIR=/var/lib/devlens` in containers and mount that path as a volume when local SQLite persistence is desired.
 
 Vercel production must use Turso/libSQL and must not depend on local `DATA_DIR` persistence. Data migration from local SQLite to Turso is operator-run with scripts, not automatic app startup behavior.
 
-Port guidance: Devlens dev ports should stay in `2026x` range for local agent work. Current package scripts and `.env.example` still reference `20128`; change-needed residue.
+## 9router change
+
+Existing `20128` references must migrate to `20261` to avoid current 9router port range.

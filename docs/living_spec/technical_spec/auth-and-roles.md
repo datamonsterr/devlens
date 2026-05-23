@@ -6,6 +6,9 @@
 - Route handlers resolve Team context from Clerk Organization membership and local `users` row.
 - Server checks enforce Manager or Developer permissions.
 - Client role checks are presentation only.
+- Next.js Clerk integration keeps `ClerkProvider` inside `<body>`.
+- Next.js proxy/middleware matchers include `'/__clerk/(.*)'` after `'/(api|trpc)(.*)'` when matcher config exists.
+- Next.js 15+ server auth calls use `await auth()`.
 
 ## API auth
 

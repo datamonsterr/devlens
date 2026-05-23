@@ -4,10 +4,10 @@
   "description": "Devlens - Centralized AI provider management for teams",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack --port 20128",
+    "dev": "next dev --webpack --port 20261",
     "build": "next build --webpack",
     "start": "next start",
-    "dev:bun": "bun --bun next dev --webpack --port 20128",
+    "dev:bun": "bun --bun next dev --webpack --port 20261",
     "build:bun": "bun --bun next build --webpack",
     "start:bun": "bun ./.next/standalone/server.js",
     "lint": "npx eslint src/ --ext .js,.jsx,.ts,.tsx 2>&1 || true",

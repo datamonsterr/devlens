@@ -132,11 +132,11 @@
 
 ## 连接被拒绝
 
-**问题:** 出现 "ECONNREFUSED" 或 "Cannot connect to localhost:20128"。
+**问题:** 出现 "ECONNREFUSED" 或 "Cannot connect to localhost:20261"。
 
 **原因:**
 - 9Router 未运行
-- 端口 20128 被阻止
+- 端口 20261 被阻止
 - 防火墙拦截连接
 
 **解决方案:**
@@ -145,21 +145,21 @@
    ```bash
    9router
    ```
-   仪表盘应该在 http://localhost:3000 打开。
+   仪表盘应该在 http://localhost:20261 打开。
 
-2. **检查端口 20128:**
+2. **检查端口 20261:**
    ```bash
    # 检查端口是否监听
-   lsof -i :20128
+   lsof -i :20261
    
    # Windows
-   netstat -ano | findstr :20128
+   netstat -ano | findstr :20261
    ```
 
 3. **检查防火墙:**
    - macOS: 系统设置 → 网络 → 防火墙
    - Windows: Windows Defender 防火墙 → 允许应用
-   - Linux: `sudo ufw allow 20128`
+   - Linux: `sudo ufw allow 20261`
 
 4. **使用云端 endpoint:**
    如果 localhost 不行(例如 Cursor IDE):
@@ -171,7 +171,7 @@
 
 ## 仪表盘无法打开
 
-**问题:** 仪表盘无法在 http://localhost:3000 加载。
+**问题:** 仪表盘无法在 http://localhost:20261 加载。
 
 **原因:**
 - 端口 3000 被占用
@@ -186,16 +186,16 @@
    ps aux | grep 9router
    
    # 检查端口 3000
-   lsof -i :3000
+   lsof -i :20261
    ```
 
 2. **杀掉冲突进程:**
    ```bash
    # macOS/Linux
-   lsof -ti:3000 | xargs kill -9
+   lsof -ti:20261 | xargs kill -9
    
    # Windows
-   netstat -ano | findstr :3000
+   netstat -ano | findstr :20261
    taskkill /PID <PID> /F
    ```
 
@@ -243,7 +243,7 @@
 
 3. **列出可用模型:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer your-api-key"
    ```
 
@@ -338,7 +338,7 @@
 
 4. **测试 API key:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer 9r_your_key"
    ```
 

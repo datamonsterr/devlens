@@ -19,7 +19,7 @@ Centralized AI provider management for teams. Manage API keys, monitor usage, an
 docker compose up
 ```
 
-App available at `http://localhost:20128`
+App available at `http://localhost:20261`
 
 ## Development
 

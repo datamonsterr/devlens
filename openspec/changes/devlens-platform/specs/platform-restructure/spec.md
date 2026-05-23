@@ -74,7 +74,7 @@ The repository SHALL include a `docker-compose.yml` that defines the Devlens app
 
 #### Scenario: Starting local environment
 - **WHEN** a developer runs `docker compose up`
-- **THEN** the Devlens application starts on port 20128 with a persistent data volume
+- **THEN** the Devlens application starts on port 20261 with a persistent data volume
 
 #### Scenario: Data persists across restarts
 - **WHEN** `docker compose down` then `docker compose up` is run

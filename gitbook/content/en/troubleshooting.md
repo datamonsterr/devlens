@@ -132,11 +132,11 @@ Common issues and solutions when using 9Router.
 
 ## Connection Refused
 
-**Problem:** "ECONNREFUSED" or "Cannot connect to localhost:20128".
+**Problem:** "ECONNREFUSED" or "Cannot connect to localhost:20261".
 
 **Causes:**
 - 9Router not running
-- Port 20128 blocked
+- Port 20261 blocked
 - Firewall blocking connection
 
 **Solutions:**
@@ -145,21 +145,21 @@ Common issues and solutions when using 9Router.
    ```bash
    9router
    ```
-   Dashboard should open at http://localhost:3000
+   Dashboard should open at http://localhost:20261
 
-2. **Verify port 20128:**
+2. **Verify port 20261:**
    ```bash
    # Check if port is listening
-   lsof -i :20128
+   lsof -i :20261
    
    # Or on Windows
-   netstat -ano | findstr :20128
+   netstat -ano | findstr :20261
    ```
 
 3. **Check firewall:**
    - macOS: System Settings → Network → Firewall
    - Windows: Windows Defender Firewall → Allow app
-   - Linux: `sudo ufw allow 20128`
+   - Linux: `sudo ufw allow 20261`
 
 4. **Use cloud endpoint:**
    If localhost doesn't work (e.g., Cursor IDE):
@@ -171,10 +171,10 @@ Common issues and solutions when using 9Router.
 
 ## Dashboard Not Opening
 
-**Problem:** Dashboard doesn't load at http://localhost:3000.
+**Problem:** Dashboard doesn't load at http://localhost:20261.
 
 **Causes:**
-- Port 3000 already in use
+- Port 20261 already in use
 - 9Router crashed
 - Browser cache issues
 
@@ -185,17 +185,17 @@ Common issues and solutions when using 9Router.
    # Check process
    ps aux | grep 9router
    
-   # Check port 3000
-   lsof -i :3000
+   # Check port 20261
+   lsof -i :20261
    ```
 
 2. **Kill conflicting process:**
    ```bash
    # macOS/Linux
-   lsof -ti:3000 | xargs kill -9
+   lsof -ti:20261 | xargs kill -9
    
    # Windows
-   netstat -ano | findstr :3000
+   netstat -ano | findstr :20261
    taskkill /PID <PID> /F
    ```
 
@@ -213,7 +213,7 @@ Common issues and solutions when using 9Router.
    - Try incognito mode
 
 5. **Check firewall settings:**
-   Ensure port 3000 is not blocked.
+   Ensure port 20261 is not blocked.
 
 ---
 
@@ -243,7 +243,7 @@ Common issues and solutions when using 9Router.
 
 3. **List available models:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer your-api-key"
    ```
 
@@ -338,7 +338,7 @@ Common issues and solutions when using 9Router.
 
 4. **Test API key:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer 9r_your_key"
    ```
 

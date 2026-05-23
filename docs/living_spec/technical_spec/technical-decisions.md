@@ -20,7 +20,7 @@
 
 ## Current code mismatches
 
-- Package scripts and `.env.example` still use `20128`.
+- Package scripts and `.env.example` still use `20261`.
 - Some schema/query paths are not fully Team-scoped.
 - Proxy Pools still exist in schema/code.
 - Legacy/9router surfaces still exist.

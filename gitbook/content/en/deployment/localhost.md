@@ -26,11 +26,11 @@ Start 9Router with a single command:
 9router
 ```
 
-The dashboard will automatically open in your browser at `http://localhost:3000`
+The dashboard will automatically open in your browser at `http://localhost:20261`
 
 **Default Configuration:**
-- **Dashboard**: `http://localhost:3000`
-- **API Endpoint**: `http://localhost:20128/v1`
+- **Dashboard**: `http://localhost:20261`
+- **API Endpoint**: `http://localhost:20261/v1`
 - **Data Directory**: `~/.9router`
 
 ---
@@ -47,7 +47,7 @@ DATA_DIR=/path/to/data 9router
 
 ### Custom Port
 
-The API port (20128) and dashboard port (3000) are configured in the application. To change them, you'll need to modify the source code or use environment variables if supported.
+The API port (20261) and dashboard port (3000) are configured in the application. To change them, you'll need to modify the source code or use environment variables if supported.
 
 ---
 
@@ -96,12 +96,12 @@ npm list -g 9router
 
 ### Port Already in Use
 
-If port 20128 or 3000 is already in use:
+If port 20261 or 3000 is already in use:
 
 ```bash
 # Find process using the port (macOS/Linux)
-lsof -i :20128
-lsof -i :3000
+lsof -i :20261
+lsof -i :20261
 
 # Kill the process
 kill -9 <PID>

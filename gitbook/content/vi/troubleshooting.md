@@ -132,11 +132,11 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
 
 ## Connection Refused
 
-**Vấn đề:** Lỗi "ECONNREFUSED" hoặc "Cannot connect to localhost:20128".
+**Vấn đề:** Lỗi "ECONNREFUSED" hoặc "Cannot connect to localhost:20261".
 
 **Nguyên nhân:**
 - 9Router không chạy
-- Port 20128 bị chặn
+- Port 20261 bị chặn
 - Firewall chặn kết nối
 
 **Giải pháp:**
@@ -145,21 +145,21 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
    ```bash
    9router
    ```
-   Dashboard sẽ mở tại http://localhost:3000
+   Dashboard sẽ mở tại http://localhost:20261
 
-2. **Xác minh port 20128:**
+2. **Xác minh port 20261:**
    ```bash
    # Check if port is listening
-   lsof -i :20128
+   lsof -i :20261
    
    # Or on Windows
-   netstat -ano | findstr :20128
+   netstat -ano | findstr :20261
    ```
 
 3. **Kiểm tra firewall:**
    - macOS: System Settings → Network → Firewall
    - Windows: Windows Defender Firewall → Allow app
-   - Linux: `sudo ufw allow 20128`
+   - Linux: `sudo ufw allow 20261`
 
 4. **Dùng cloud endpoint:**
    Nếu localhost không hoạt động (ví dụ: Cursor IDE):
@@ -171,10 +171,10 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
 
 ## Dashboard không mở
 
-**Vấn đề:** Dashboard không load tại http://localhost:3000.
+**Vấn đề:** Dashboard không load tại http://localhost:20261.
 
 **Nguyên nhân:**
-- Port 3000 đã được dùng
+- Port 20261 đã được dùng
 - 9Router bị crash
 - Vấn đề cache browser
 
@@ -185,17 +185,17 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
    # Check process
    ps aux | grep 9router
    
-   # Check port 3000
-   lsof -i :3000
+   # Check port 20261
+   lsof -i :20261
    ```
 
 2. **Kill process xung đột:**
    ```bash
    # macOS/Linux
-   lsof -ti:3000 | xargs kill -9
+   lsof -ti:20261 | xargs kill -9
    
    # Windows
-   netstat -ano | findstr :3000
+   netstat -ano | findstr :20261
    taskkill /PID <PID> /F
    ```
 
@@ -213,7 +213,7 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
    - Thử chế độ ẩn danh
 
 5. **Kiểm tra cài đặt firewall:**
-   Đảm bảo port 3000 không bị chặn.
+   Đảm bảo port 20261 không bị chặn.
 
 ---
 
@@ -243,7 +243,7 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
 
 3. **Liệt kê model khả dụng:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer your-api-key"
    ```
 
@@ -338,7 +338,7 @@ Các vấn đề và giải pháp phổ biến khi dùng 9Router.
 
 4. **Test API key:**
    ```bash
-   curl http://localhost:20128/v1/models \
+   curl http://localhost:20261/v1/models \
      -H "Authorization: Bearer 9r_your_key"
    ```
 

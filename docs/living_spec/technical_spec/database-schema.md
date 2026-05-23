@@ -34,4 +34,4 @@ Operator workflow:
 4. Import export into Turso.
 5. Verify table row counts.
 
-Import is fail-fast by default: non-empty target tables abort unless `--allow-non-empty` is explicitly supplied after manual review. Full runbook: `docs/sqlite-to-turso.md`.
+Import is fail-fast by default: non-empty target tables abort. Use `--replace` to delete target rows before import (only after confirming target URL and backup). Full runbook: `docs/sqlite-to-turso.md`.

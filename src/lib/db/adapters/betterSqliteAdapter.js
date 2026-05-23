@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import Database from "better-sqlite3";
 import { PRAGMA_SQL } from "../schema.js";
 
@@ -26,7 +27,15 @@ export function createBetterSqliteAdapter(filePath) {
   }, CHECKPOINT_INTERVAL_MS);
   if (typeof checkpointTimer.unref === "function") checkpointTimer.unref();
 
-  let txQueue = Promise.resolve();
+  let queue = Promise.resolve();
+  const txStorage = new AsyncLocalStorage();
+
+  function serialize(operation) {
+    if (txStorage.getStore()) return operation();
+    const next = queue.then(operation, operation);
+    queue = next.catch(() => {});
+    return next;
+  }
 
   function gracefulClose() {
     try { db.pragma("wal_checkpoint(TRUNCATE)"); } catch {}
@@ -42,26 +51,23 @@ export function createBetterSqliteAdapter(filePath) {
 
   return {
     driver: "better-sqlite3",
-    run(sql, params = []) { return prepare(sql).run(params); },
-    get(sql, params = []) { return prepare(sql).get(params); },
-    all(sql, params = []) { return prepare(sql).all(params); },
-    exec(sql) { return db.exec(sql); },
+    run(sql, params = []) { return serialize(() => prepare(sql).run(params)); },
+    get(sql, params = []) { return serialize(() => prepare(sql).get(params)); },
+    all(sql, params = []) { return serialize(() => prepare(sql).all(params)); },
+    exec(sql) { return serialize(() => db.exec(sql)); },
     transaction(fn) {
-      const runTx = async () => {
+      return serialize(async () => {
         const sp = `tx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
         db.exec(`SAVEPOINT ${sp}`);
         try {
-          const result = await fn();
+          const result = await txStorage.run(true, fn);
           db.exec(`RELEASE ${sp}`);
           return result;
         } catch (error) {
           try { db.exec(`ROLLBACK TO ${sp}`); db.exec(`RELEASE ${sp}`); } catch {}
           throw error;
         }
-      };
-      const next = txQueue.then(runTx, runTx);
-      txQueue = next.catch(() => {});
-      return next;
+      });
     },
     checkpoint() { try { db.pragma("wal_checkpoint(TRUNCATE)"); } catch {} },
     close() {

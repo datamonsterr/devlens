@@ -11,7 +11,7 @@ export async function authenticateApiKey(request) {
   const key = authHeader.slice(7);
   const adapter = await getAdapter();
 
-  const apiKeys = adapter.all(
+  const apiKeys = await adapter.all(
     `SELECT id, keyHash, userId, teamId, isActive FROM apiKeys WHERE isActive = 1`
   );
 
@@ -20,7 +20,7 @@ export async function authenticateApiKey(request) {
       // Legacy plain-text key support
       if (!ak.keyHash) continue;
 
-      const user = adapter.get(
+      const user = await adapter.get(
         `SELECT id, clerkUserId, role FROM users WHERE id = ? AND isActive = 1`,
         [ak.userId]
       );
@@ -32,7 +32,7 @@ export async function authenticateApiKey(request) {
       // Update last used
       const now = new Date().toISOString();
       try {
-        adapter.run(`UPDATE apiKeys SET lastUsedAt = ? WHERE id = ?`, [now, ak.id]);
+        await adapter.run(`UPDATE apiKeys SET lastUsedAt = ? WHERE id = ?`, [now, ak.id]);
       } catch { /* non-critical */ }
 
       return {

@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { createClient } from "@libsql/client";
 import { PRAGMA_SQL } from "../schema.js";
 
@@ -36,28 +37,44 @@ export async function createLibsqlAdapter({ url, authToken }) {
     }
   }
 
-  async function exec(sql) {
+  let queue = Promise.resolve();
+  const txStorage = new AsyncLocalStorage();
+
+  function serialize(operation) {
+    if (txStorage.getStore()) return operation();
+    const next = queue.then(operation, operation);
+    queue = next.catch(() => {});
+    return next;
+  }
+
+  async function execImmediate(sql) {
     for (const statement of splitStatements(sql)) await execute(statement);
+  }
+
+  function exec(sql) {
+    return serialize(() => execImmediate(sql));
   }
 
   await exec(PRAGMA_SQL);
 
   return {
     driver: "libsql",
-    async run(sql, params = []) { return normalizeResult(await execute(sql, params)); },
-    async get(sql, params = []) { return normalizeRow((await execute(sql, params)).rows[0]); },
-    async all(sql, params = []) { return (await execute(sql, params)).rows.map(normalizeRow); },
+    async run(sql, params = []) { return serialize(async () => normalizeResult(await execute(sql, params))); },
+    async get(sql, params = []) { return serialize(async () => normalizeRow((await execute(sql, params)).rows[0])); },
+    async all(sql, params = []) { return serialize(async () => (await execute(sql, params)).rows.map(normalizeRow)); },
     exec,
     async transaction(fn) {
-      await execute("BEGIN");
-      try {
-        const result = await fn();
-        await execute("COMMIT");
-        return result;
-      } catch (err) {
-        try { await execute("ROLLBACK"); } catch {}
-        throw err;
-      }
+      return serialize(async () => {
+        await execute("BEGIN");
+        try {
+          const result = await txStorage.run(true, fn);
+          await execute("COMMIT");
+          return result;
+        } catch (err) {
+          try { await execute("ROLLBACK"); } catch {}
+          throw err;
+        }
+      });
     },
     close() { client.close(); },
     raw: client,

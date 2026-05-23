@@ -3,7 +3,7 @@ import path from "node:path";
 import { LEGACY_FILES, DB_DIR, DATA_FILE } from "./paths.js";
 import { TABLES, buildCreateTableSql } from "./schema.js";
 import { MIGRATIONS, latestVersion } from "./migrations/index.js";
-import { getMetaSync, setMetaSync } from "./helpers/metaStore.js";
+import { getMetaWithAdapter, setMetaWithAdapter } from "./helpers/metaStore.js";
 import { makeBackupDir, backupFile, pruneOldBackups } from "./backup.js";
 import { getAppVersion } from "./version.js";
 import { stringifyJson } from "./helpers/jsonCol.js";
@@ -58,7 +58,7 @@ async function runVersionedMigrations(adapter) {
   // Bootstrap _meta first so we can read schemaVersion
   await adapter.exec(buildCreateTableSql("_meta", TABLES._meta));
 
-  const current = parseInt(await getMetaSync(adapter, "schemaVersion", "0"), 10) || 0;
+  const current = parseInt(await getMetaWithAdapter(adapter, "schemaVersion", "0"), 10) || 0;
   const target = latestVersion();
   if (current >= target) return { applied: 0, from: current, to: current };
 
@@ -67,7 +67,7 @@ async function runVersionedMigrations(adapter) {
   for (const m of pending) {
     await adapter.transaction(async () => {
       await m.up(adapter);
-      await setMetaSync(adapter, "schemaVersion", m.version);
+      await setMetaWithAdapter(adapter, "schemaVersion", m.version);
     });
     lastApplied = m.version;
     console.log(`[DB][migrate] applied #${m.version} ${m.name}`);
@@ -183,7 +183,7 @@ async function importLegacyUsage(adapter, data) {
     await adapter.run(`INSERT OR REPLACE INTO usageDaily(dateKey, data) VALUES(?, ?)`, [dateKey, stringifyJson(day)]);
   }
   if (typeof data.totalRequestsLifetime === "number") {
-    await setMetaSync(adapter, "totalRequestsLifetime", data.totalRequestsLifetime);
+    await setMetaWithAdapter(adapter, "totalRequestsLifetime", data.totalRequestsLifetime);
   }
 }
 
@@ -238,8 +238,8 @@ export async function runMigrationOnce(adapter) {
         await importLegacyUsage(adapter, legacyUsage);
         await importLegacyDisabled(adapter, legacyDisabled);
         await importLegacyDetails(adapter, legacyDetails);
-        await setMetaSync(adapter, "appVersion", getAppVersion());
-        await setMetaSync(adapter, "migratedAt", new Date().toISOString());
+        await setMetaWithAdapter(adapter, "appVersion", getAppVersion());
+        await setMetaWithAdapter(adapter, "migratedAt", new Date().toISOString());
       });
     } catch (err) {
       if (err instanceof MigrationAborted) {
@@ -256,17 +256,17 @@ export async function runMigrationOnce(adapter) {
   }
 
   if (fresh) {
-    await setMetaSync(adapter, "appVersion", getAppVersion());
+    await setMetaWithAdapter(adapter, "appVersion", getAppVersion());
     return;
   }
 
   // 4. App version bump → backup data.sqlite (safety net before user-side upgrade)
-  const oldVer = await getMetaSync(adapter, "appVersion", null);
+  const oldVer = await getMetaWithAdapter(adapter, "appVersion", null);
   const newVer = getAppVersion();
   if (oldVer && oldVer !== newVer) {
     const backupDir = makeBackupDir(`upgrade-${oldVer}-to-${newVer}`);
     try { backupFile(DATA_FILE, backupDir); } catch {}
-    await setMetaSync(adapter, "appVersion", newVer);
+    await setMetaWithAdapter(adapter, "appVersion", newVer);
     pruneOldBackups();
     console.log(`[DB][migrate] App ${oldVer} → ${newVer} | schema ${migInfo.from} → ${migInfo.to} | backup: ${backupDir}`);
   } else if (migInfo.applied > 0) {

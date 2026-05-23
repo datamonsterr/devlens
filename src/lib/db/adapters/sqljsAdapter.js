@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import fs from "node:fs";
 import initSqlJs from "sql.js";
 import { PRAGMA_SQL } from "../schema.js";
@@ -85,14 +86,22 @@ export async function createSqlJsAdapter(filePath) {
     scheduleSave();
   }
 
-  let txQueue = Promise.resolve();
+  let queue = Promise.resolve();
+  const txStorage = new AsyncLocalStorage();
+
+  function serialize(operation) {
+    if (txStorage.getStore()) return operation();
+    const next = queue.then(operation, operation);
+    queue = next.catch(() => {});
+    return next;
+  }
 
   function transaction(fn) {
-    const runTx = async () => {
+    return serialize(async () => {
       const sp = `sp_${Math.random().toString(36).slice(2)}`;
       db.exec(`SAVEPOINT ${sp}`);
       try {
-        const result = await fn();
+        const result = await txStorage.run(true, fn);
         db.exec(`RELEASE ${sp}`);
         scheduleSave();
         return result;
@@ -100,10 +109,7 @@ export async function createSqlJsAdapter(filePath) {
         try { db.exec(`ROLLBACK TO ${sp}`); db.exec(`RELEASE ${sp}`); } catch {}
         throw e;
       }
-    };
-    const next = txQueue.then(runTx, runTx);
-    txQueue = next.catch(() => {});
-    return next;
+    });
   }
 
   function close() {
@@ -118,5 +124,14 @@ export async function createSqlJsAdapter(filePath) {
   process.on("SIGINT", flush);
   process.on("SIGTERM", flush);
 
-  return { driver: "sql.js", run, get, all, exec, transaction, close, raw: db };
+  return {
+    driver: "sql.js",
+    run(sql, params = []) { return serialize(() => run(sql, params)); },
+    get(sql, params = []) { return serialize(() => get(sql, params)); },
+    all(sql, params = []) { return serialize(() => all(sql, params)); },
+    exec(sql) { return serialize(() => exec(sql)); },
+    transaction,
+    close,
+    raw: db,
+  };
 }

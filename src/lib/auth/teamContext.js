@@ -8,14 +8,14 @@ export async function getTeamContext() {
   if (Array.isArray(memberships) && memberships.length !== 1) return null;
 
   const adapter = await getAdapter();
-  const team = adapter.get(
+  const team = await adapter.get(
     `SELECT id, name, clerkOrgId, rtkPool FROM teams WHERE clerkOrgId = ?`,
     [orgId]
   );
 
   if (!team) return null;
 
-  const user = adapter.get(
+  const user = await adapter.get(
     `SELECT id, role, isActive FROM users WHERE clerkUserId = ? AND teamId = ?`,
     [userId, team.id]
   );

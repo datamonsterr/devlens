@@ -33,8 +33,8 @@ export async function getTeamContext() {
 
 export async function requireTeamContext() {
   const ctx = await getTeamContext();
-  if (!ctx) throw new Response(JSON.stringify({ error: "Team context not found" }), { status: 403 });
-  if (!ctx.isActive) throw new Response(JSON.stringify({ error: "Account inactive" }), { status: 403 });
+  if (!ctx) throw new Response(JSON.stringify({ error: "Team context not found" }), { status: 403, headers: { "Content-Type": "application/json" } });
+  if (!ctx.isActive) throw new Response(JSON.stringify({ error: "Account inactive" }), { status: 403, headers: { "Content-Type": "application/json" } });
   return ctx;
 }
 
@@ -43,7 +43,7 @@ export async function requireTeamRole(allowedRoles) {
   const allowed = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   const hierarchy = { manager: 2, developer: 1 };
   if (!ctx.role || !allowed.some((role) => ctx.role === role || hierarchy[ctx.role] >= hierarchy[role])) {
-    throw new Response(JSON.stringify({ error: "Insufficient permissions" }), { status: 403 });
+    throw new Response(JSON.stringify({ error: "Insufficient permissions" }), { status: 403, headers: { "Content-Type": "application/json" } });
   }
   return ctx;
 }

@@ -24,7 +24,7 @@ export async function GET() {
       active: team.rtkPool > 0,
     });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -77,7 +77,7 @@ export async function PUT(request) {
       active: updated.rtkPool > 0,
     });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

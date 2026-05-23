@@ -25,7 +25,7 @@ export async function GET() {
 
     return NextResponse.json({ members });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -70,7 +70,7 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, invited: email }, { status: 202 });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -96,7 +96,7 @@ export async function DELETE(request) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

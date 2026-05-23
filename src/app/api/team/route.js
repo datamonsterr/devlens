@@ -20,7 +20,7 @@ export async function GET() {
 
     return NextResponse.json({ team });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -47,7 +47,7 @@ export async function PUT(request) {
 
     return NextResponse.json({ team });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

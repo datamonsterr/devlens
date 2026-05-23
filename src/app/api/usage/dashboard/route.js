@@ -154,7 +154,7 @@ export async function GET(request) {
       recentActivity,
     });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     console.error("[Dashboard] Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

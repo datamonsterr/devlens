@@ -22,7 +22,7 @@ export async function GET() {
 
     return NextResponse.json({ history });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

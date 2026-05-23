@@ -34,7 +34,7 @@ export async function POST(request, { params }) {
 
     return NextResponse.json({ id: existing.id, name: existing.name, key: newKeyValue });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

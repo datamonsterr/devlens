@@ -27,7 +27,7 @@ export async function GET() {
 
     return NextResponse.json({ keys: keys.map((k) => ({ ...k, isActive: k.isActive === 1 })) });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
@@ -89,7 +89,7 @@ export async function POST(request) {
       { status: 201 }
     );
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

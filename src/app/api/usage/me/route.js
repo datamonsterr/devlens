@@ -40,7 +40,7 @@ export async function GET(request) {
     );
     return NextResponse.json({ ...payload(rows), models: rows, providers: rows, chartData: [], recentActivity });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

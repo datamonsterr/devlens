@@ -71,7 +71,7 @@ export async function GET() {
       rtkActive: rtkPool > 0,
     });
   } catch (error) {
-    if (error instanceof Response) throw error;
+    if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

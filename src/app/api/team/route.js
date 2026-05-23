@@ -18,7 +18,7 @@ export async function GET() {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ team });
+    return NextResponse.json({ team, context: { userId: ctx.userId, role: ctx.role, isActive: ctx.isActive } });
   } catch (error) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });

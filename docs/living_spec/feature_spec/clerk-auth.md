@@ -12,6 +12,7 @@ Authenticate Managers and Developers through Clerk sessions and Clerk Organizati
 
 - Clerk Organization maps 1:1 to Team.
 - Clerk user maps to one Devlens user.
+- Signed-in Clerk Organization session self-heals missing Clerk Organization→Team and Clerk user→local user rows when webhook creation was missed.
 - Manager sign-up creates Team.
 - Developer joins existing Team by Manager invitation.
 - Dashboard and management APIs require Clerk session.

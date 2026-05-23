@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { assertManager } from "@/lib/auth";
-import { getDisabledModels, disableModels, enableModels } from "@/lib/disabledModelsDb";
+import { getDisabledModels, disableModels, enableModels } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

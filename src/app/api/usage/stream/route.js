@@ -1,4 +1,4 @@
-import { getUsageStats, statsEmitter, getActiveRequests } from "@/lib/usageDb";
+import { getUsageStats, statsEmitter, getActiveRequests } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 

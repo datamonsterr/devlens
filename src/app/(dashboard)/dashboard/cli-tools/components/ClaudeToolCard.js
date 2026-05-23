@@ -23,8 +23,6 @@ export default function ClaudeToolCard({
   initialStatus,
   tunnelEnabled,
   tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
 }) {
   const [claudeStatus, setClaudeStatus] = useState(initialStatus || null);
   const [checkingClaude, setCheckingClaude] = useState(false);
@@ -45,7 +43,7 @@ export default function ClaudeToolCard({
     if (!claudeStatus?.installed) return null;
     const currentUrl = claudeStatus.settings?.env?.ANTHROPIC_BASE_URL;
     if (!currentUrl) return "not_configured";
-    if (matchKnownEndpoint(currentUrl, { tunnelPublicUrl, tailscaleUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null })) return "configured";
+    if (matchKnownEndpoint(currentUrl, { tunnelPublicUrl, cloudUrl: cloudEnabled ? CLOUD_URL : null })) return "configured";
     return "other";
   };
 
@@ -304,8 +302,6 @@ export default function ClaudeToolCard({
                     requiresExternalUrl={tool.requiresExternalUrl}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
-                    tailscaleEnabled={tailscaleEnabled}
-                    tailscaleUrl={tailscaleUrl}
                   />
                 </div>
 

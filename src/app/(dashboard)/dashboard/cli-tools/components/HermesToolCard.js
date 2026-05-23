@@ -21,8 +21,6 @@ export default function HermesToolCard({
   initialStatus,
   tunnelEnabled,
   tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
 }) {
   const [hermesStatus, setHermesStatus] = useState(initialStatus || null);
   const [checking, setChecking] = useState(false);
@@ -41,7 +39,7 @@ export default function HermesToolCard({
     if (!hermesStatus?.installed) return null;
     const cfg = hermesStatus.settings?.model;
     if (!cfg?.base_url) return "not_configured";
-    if (matchKnownEndpoint(cfg.base_url, { tunnelPublicUrl, tailscaleUrl })) return "configured";
+    if (matchKnownEndpoint(cfg.base_url, { tunnelPublicUrl })) return "configured";
     return "other";
   };
 
@@ -241,8 +239,6 @@ export default function HermesToolCard({
                     requiresExternalUrl={tool.requiresExternalUrl}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
-                    tailscaleEnabled={tailscaleEnabled}
-                    tailscaleUrl={tailscaleUrl}
                   />
                 </div>
 

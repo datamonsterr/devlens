@@ -38,7 +38,7 @@ export async function PUT(request) {
 
     adapter.run(
       `INSERT INTO teamSettings(teamId, maxKeysPerDeveloper, data) VALUES(?, ?, ?) ON CONFLICT(teamId) DO UPDATE SET maxKeysPerDeveloper = excluded.maxKeysPerDeveloper, data = excluded.data`,
-      [ctx.teamId, body.maxKeysPerDeveloper || 5, JSON.stringify(body.data || {}))]
+      [ctx.teamId, body.maxKeysPerDeveloper || 5, JSON.stringify(body.data || {})]
     );
 
     return NextResponse.json({ success: true });

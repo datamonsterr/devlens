@@ -21,8 +21,6 @@ export default function DeepSeekTuiToolCard({
   initialStatus,
   tunnelEnabled,
   tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
 }) {
   const [deepseekStatus, setDeepseekStatus] = useState(initialStatus || null);
   const [checking, setChecking] = useState(false);
@@ -41,7 +39,7 @@ export default function DeepSeekTuiToolCard({
     if (!deepseekStatus?.installed) return null;
     const openaiSection = deepseekStatus.settings?.["providers.openai"];
     if (!openaiSection?.base_url) return "not_configured";
-    if (matchKnownEndpoint(openaiSection.base_url, { tunnelPublicUrl, tailscaleUrl })) return "configured";
+    if (matchKnownEndpoint(openaiSection.base_url, { tunnelPublicUrl })) return "configured";
     return "other";
   };
 
@@ -262,8 +260,6 @@ model = "${selectedModel || "provider/model-id"}"
                     requiresExternalUrl={tool.requiresExternalUrl}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
-                    tailscaleEnabled={tailscaleEnabled}
-                    tailscaleUrl={tailscaleUrl}
                   />
                 </div>
 

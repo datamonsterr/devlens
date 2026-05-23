@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertManager } from "@/lib/auth";
 import { getModelAliases, setModelAlias } from "@/models";
-import { getDisabledModels } from "@/lib/disabledModelsDb";
+import { getDisabledModels } from "@/lib/db";
 import { AI_MODELS } from "@/shared/constants/config";
 import { getProviderAlias } from "@/shared/constants/providers";
 

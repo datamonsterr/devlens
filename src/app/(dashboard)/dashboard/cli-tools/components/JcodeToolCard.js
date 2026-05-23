@@ -19,8 +19,6 @@ export default function JcodeToolCard({
   initialStatus,
   tunnelEnabled,
   tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
 }) {
   const [jcodeStatus, setJcodeStatus] = useState(initialStatus || null);
   const [checkingJcode, setCheckingJcode] = useState(false);
@@ -40,7 +38,7 @@ export default function JcodeToolCard({
     if (!jcodeStatus?.has9Router) return "not_configured";
     const currentProvider = jcodeStatus.config?.providers?.["9router"];
     if (!currentProvider) return "not_configured";
-    return matchKnownEndpoint(currentProvider.base_url, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
+    return matchKnownEndpoint(currentProvider.base_url, { tunnelPublicUrl }) ? "configured" : "other";
   };
 
   const configStatus = getConfigStatus();
@@ -294,8 +292,6 @@ id = "${selectedModel || "cc/claude-opus-4-7"}"`;
                     requiresExternalUrl={tool.requiresExternalUrl}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
-                    tailscaleEnabled={tailscaleEnabled}
-                    tailscaleUrl={tailscaleUrl}
                   />
                 </div>
 

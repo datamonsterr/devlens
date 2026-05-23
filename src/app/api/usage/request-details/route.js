@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRequestDetails } from "@/lib/usageDb";
+import { getRequestDetails } from "@/lib/db";
 
 /**
  * GET /api/usage/request-details

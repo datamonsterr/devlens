@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRecentLogs } from "@/lib/usageDb";
+import { getRecentLogs } from "@/lib/db";
 
 export async function GET() {
   try {

@@ -3,7 +3,7 @@ import { requireTeamContext } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
 import { getProviderConnections, getCombos, getModelAliases } from "@/lib/localDb";
 import { getPricing } from "@/lib/localDb";
-import { getDisabledModels } from "@/lib/disabledModelsDb";
+import { getDisabledModels } from "@/lib/db";
 import { AI_PROVIDERS, getProviderAlias } from "@/shared/constants/providers";
 import { AI_MODELS } from "@/shared/constants/config";
 

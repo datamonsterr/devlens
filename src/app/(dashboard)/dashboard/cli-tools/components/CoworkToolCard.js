@@ -27,8 +27,6 @@ export default function CoworkToolCard({
   cloudUrl,
   tunnelEnabled,
   tunnelPublicUrl,
-  tailscaleEnabled,
-  tailscaleUrl,
   initialStatus,
 }) {
   const [status, setStatus] = useState(initialStatus || null);
@@ -302,8 +300,6 @@ export default function CoworkToolCard({
                     onChange={(url) => setCustomBaseUrl(stripV1(url))}
                     tunnelEnabled={tunnelEnabled}
                     tunnelPublicUrl={tunnelPublicUrl}
-                    tailscaleEnabled={tailscaleEnabled}
-                    tailscaleUrl={tailscaleUrl}
                     cloudEnabled={cloudEnabled}
                     cloudUrl={cloudUrl}
                   />

@@ -7,7 +7,7 @@ import {
   isOpenAICompatibleProvider,
 } from "@/shared/constants/providers";
 import { getProviderConnections, getCombos, getCustomModels, getModelAliases } from "@/lib/localDb";
-import { getDisabledModels } from "@/lib/disabledModelsDb";
+import { getDisabledModels } from "@/lib/db";
 import { resolveKiroModels } from "open-sse/services/kiroModels.js";
 
 // Per-provider live model resolvers. Each receives a connection record and

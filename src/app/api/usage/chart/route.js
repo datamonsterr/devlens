@@ -1,15 +1,29 @@
 import { NextResponse } from "next/server";
 import { getChartData } from "@/lib/db";
+import { requireTeamContext } from "@/lib/auth";
+import { getAdapter } from "@/lib/db/driver";
 
 const VALID_PERIODS = new Set(["today", "24h", "7d", "30d", "60d"]);
 
 export async function GET(request) {
   try {
+    const ctx = await requireTeamContext();
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "7d";
 
     if (!VALID_PERIODS.has(period)) {
       return NextResponse.json({ error: "Invalid period" }, { status: 400 });
+    }
+
+    if (ctx.role === "developer") {
+      const db = await getAdapter();
+      const days = period === "30d" ? 30 : period === "60d" ? 60 : 7;
+      const start = new Date(Date.now() - days * 86400000).toISOString();
+      const rows = db.all(
+        `SELECT date(timestamp) label, COALESCE(SUM(promptTokens + completionTokens), 0) tokens, COALESCE(SUM(cost), 0) cost FROM usageHistory WHERE teamId = ? AND userId = ? AND timestamp >= ? GROUP BY date(timestamp) ORDER BY label ASC`,
+        [ctx.teamId, ctx.userId, start]
+      );
+      return NextResponse.json(rows);
     }
 
     const data = await getChartData(period);

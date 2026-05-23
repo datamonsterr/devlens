@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { assertManager, requireTeamContext } from "@/lib/auth";
 import { getPricing, updatePricing, resetPricing, resetAllPricing } from "@/lib/localDb.js";
 import { getDefaultPricing } from "@/shared/constants/pricing.js";
 
@@ -9,6 +9,7 @@ import { getDefaultPricing } from "@/shared/constants/pricing.js";
  */
 export async function GET() {
   try {
+    await requireTeamContext();
     const pricing = await getPricing();
     return NextResponse.json(pricing);
   } catch (error) {

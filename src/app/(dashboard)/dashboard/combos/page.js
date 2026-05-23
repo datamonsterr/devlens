@@ -143,9 +143,17 @@ export default function CombosPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold">Combos</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold">Combos</h1>
+            {!isManager && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-text-muted">
+                <span className="material-symbols-outlined text-[12px]">visibility</span>
+                Read-only
+              </span>
+            )}
+          </div>
           <p className="text-sm text-text-muted mt-1">
-            Create model combos with fallback support
+            {isManager ? "Create model combos with fallback support" : "View available model combos"}
           </p>
         </div>
         {isManager && (
@@ -164,9 +172,11 @@ export default function CombosPage() {
             </div>
             <p className="text-text-main font-medium mb-1">No combos yet</p>
             <p className="text-sm text-text-muted mb-4">Create model combos with fallback support</p>
+            {isManager && (
             <Button icon="add" onClick={() => setShowCreateModal(true)} className="w-full sm:w-auto">
               Create Combo
             </Button>
+            )}
           </div>
         </Card>
       ) : (

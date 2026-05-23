@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Card, Button } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+import RoleGuard from "@/shared/components/RoleGuard";
 import dynamic from "next/dynamic";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), { ssr: false });
@@ -28,6 +29,14 @@ const EDITOR_OPTIONS = {
 };
 
 export default function TranslatorPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <TranslatorContent />
+    </RoleGuard>
+  );
+}
+
+function TranslatorContent() {
   const [contents, setContents] = useState({});
   const [expanded, setExpanded] = useState({ 1: true });
   const [loading, setLoading] = useState({});

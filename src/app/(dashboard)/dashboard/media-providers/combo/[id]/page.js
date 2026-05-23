@@ -44,7 +44,17 @@ function getListingHref(kind) {
   return `/dashboard/media-providers/${kind}`;
 }
 
+import RoleGuard from "@/shared/components/RoleGuard";
+
 export default function ComboDetailPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <ComboDetailContent />
+    </RoleGuard>
+  );
+}
+
+function ComboDetailContent() {
   const { id } = useParams();
   const router = useRouter();
   const [combo, setCombo] = useState(null);

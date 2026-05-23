@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { cn } from "@/shared/utils/cn";
+import { useRole } from "@/shared/hooks/useRole";
 import { APP_CONFIG, UPDATER_CONFIG } from "@/shared/constants/config";
 import { MEDIA_PROVIDER_KINDS } from "@/shared/constants/providers";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
@@ -17,7 +17,7 @@ const VISIBLE_MEDIA_KINDS = ["embedding", "image", "tts", "stt"];
 // Combined entry: webSearch + webFetch share one page at /dashboard/media-providers/web
 const COMBINED_WEB_ITEM = { id: "web", label: "Web Fetch & Search", icon: "travel_explore", href: "/dashboard/media-providers/web" };
 
-const sharedItems = [
+const managerSharedItems = [
   { href: "/dashboard/endpoint", label: "Endpoint", icon: "api" },
   { href: "/dashboard/keys", label: "API Keys", icon: "key" },
 ];
@@ -32,15 +32,17 @@ const managerItems = [
 ];
 
 const developerItems = [
+  { href: "/dashboard/endpoint", label: "Endpoint", icon: "api" },
+  { href: "/dashboard/keys", label: "API Keys", icon: "key" },
+  { href: "/dashboard/combos", label: "Combos", icon: "layers" },
   { href: "/dashboard/models", label: "Models", icon: "hub" },
   { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
   { href: "/dashboard/cli-tools", label: "CLI Config", icon: "terminal" },
-  { href: "/dashboard/profile", label: "Account", icon: "account_circle" },
   { href: "/dashboard/console-log", label: "Console Log", icon: "terminal" },
+  { href: "/dashboard/profile", label: "Account", icon: "account_circle" },
 ];
 
 const debugItems = [
-  { href: "/dashboard/console-log", label: "Console Log", icon: "terminal" },
   { href: "/dashboard/translator", label: "Translator", icon: "translate" },
 ];
 
@@ -50,10 +52,8 @@ const systemItems = [
 
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
-  const role = isLoaded ? (user?.publicMetadata?.role || null) : null;
-  const isManager = role === "manager";
-  const isDeveloper = role === "developer";
+  const { isManager } = useRole();
+  const isDeveloper = !isManager;
   const [mediaOpen, setMediaOpen] = useState(false);
   const [showShutdownModal, setShowShutdownModal] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
@@ -184,7 +184,7 @@ export default function Sidebar({ onClose }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-2 space-y-0.5 overflow-y-auto custom-scrollbar">
-          {sharedItems.map((item) => (
+          {isManager && managerSharedItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
@@ -390,34 +390,10 @@ export default function Sidebar({ onClose }) {
           </div>
           )}
 
-          {/* Developer-only settings link */}
-          {!isManager && (
-            <div className="pt-3 mt-2 space-y-0.5">
-              <Link
-                href="/dashboard/profile"
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                  isActive("/dashboard/profile")
-                    ? "bg-primary/10 text-primary"
-                    : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                )}
-              >
-                <span
-                  className={cn(
-                    "material-symbols-outlined text-[18px]",
-                    isActive("/dashboard/profile") ? "fill-1" : "group-hover:text-primary transition-colors"
-                  )}
-                >
-                  settings
-                </span>
-                <span className="text-[13px] font-medium">Settings</span>
-              </Link>
-            </div>
-          )}
         </nav>
 
-        {/* Footer section */}
+        {/* Footer section — manager only */}
+        {isManager && (
         <div className="p-3 border-t border-border-subtle">
           {/* Shutdown button */}
           <Button
@@ -430,6 +406,7 @@ export default function Sidebar({ onClose }) {
             Shutdown
           </Button>
         </div>
+        )}
       </aside>
 
       {/* Shutdown Confirmation Modal */}

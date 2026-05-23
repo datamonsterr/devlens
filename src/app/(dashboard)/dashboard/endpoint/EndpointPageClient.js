@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import PropTypes from "prop-types";
 import { Card, Button, Input, Modal, CardSkeleton, Toggle, ConfirmModal } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
+import { useRole } from "@/shared/hooks/useRole";
+import CliConfigSnippet from "@/shared/components/CliConfigSnippet";
 
 const TUNNEL_BENEFITS = [
   { icon: "public", title: "Access Anywhere", desc: "Use your API from any network" },
@@ -54,6 +56,7 @@ const CAVEMAN_LEVELS = [
   { id: "ultra", label: "Ultra", desc: "Telegraphic, max compression" },
 ];
 export default function APIPageClient({ machineId }) {
+  const { isManager } = useRole();
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -514,6 +517,7 @@ export default function APIPageClient({ machineId }) {
             onCopy={copy}
           />
           {/* Cloudflare Tunnel */}
+          {isManager && (
           <div className="flex items-center gap-2">
             <span className={`text-xs font-mono px-1.5 py-0.5 rounded shrink-0 min-w-[88px] text-center ${
               tunnelEnabled ? "bg-primary/10 text-primary" : "bg-surface-2 text-text-muted"
@@ -605,10 +609,11 @@ export default function APIPageClient({ machineId }) {
               </Button>
             )}
           </div>
+          )}
         </div>
 
         {/* Pre-enable security gate banner */}
-        {isLoginUnsafe && !tunnelEnabled && (
+        {isManager && isLoginUnsafe && !tunnelEnabled && (
           <div className="mt-4">
             <SecurityWarning
               message={unsafeReason}
@@ -618,7 +623,7 @@ export default function APIPageClient({ machineId }) {
         )}
 
         {/* Security warnings when tunnel is active */}
-        {tunnelEnabled && (
+        {isManager && tunnelEnabled && (
           <div className="mt-4 flex flex-col gap-2">
             {!requireApiKey && (
               <SecurityWarning
@@ -643,7 +648,7 @@ export default function APIPageClient({ machineId }) {
         )}
 
         {/* Tunnel dashboard access option */}
-        {tunnelEnabled && (
+        {isManager && tunnelEnabled && (
           <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
             <Toggle
               checked={tunnelDashboardAccess}
@@ -658,6 +663,7 @@ export default function APIPageClient({ machineId }) {
       </Card>
 
       {/* Token Saver (RTK + Caveman) */}
+      {isManager && (
       <Card id="rtk">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-semibold flex items-center gap-2">
@@ -730,6 +736,7 @@ export default function APIPageClient({ machineId }) {
           </div>
         </div>
       </Card>
+      )}
 
       {/* API Keys */}
       <Card id="require-api-key">
@@ -743,6 +750,7 @@ export default function APIPageClient({ machineId }) {
           </Button>
         </div>
 
+        {isManager && (
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
           <div>
             <p className="font-medium">Require API key</p>
@@ -755,6 +763,7 @@ export default function APIPageClient({ machineId }) {
             onChange={() => handleRequireApiKey(!requireApiKey)}
           />
         </div>
+        )}
 
         {keys.length === 0 ? (
           <div className="text-center py-12">
@@ -836,6 +845,10 @@ export default function APIPageClient({ machineId }) {
             ))}
           </div>
         )}
+      </Card>
+
+      <Card>
+        <CliConfigSnippet baseUrl={currentEndpoint} apiKey={createdKey} />
       </Card>
 
       {/* Add Key Modal */}

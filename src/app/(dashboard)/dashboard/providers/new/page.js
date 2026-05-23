@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, Button, Input, Select, Toggle } from "@/shared/components";
 import { AI_PROVIDERS, AUTH_METHODS } from "@/shared/constants/config";
+import RoleGuard from "@/shared/components/RoleGuard";
 
 const providerOptions = Object.values(AI_PROVIDERS).map((p) => ({
   value: p.id,
@@ -73,6 +74,7 @@ export default function NewProviderPage() {
   const selectedProvider = AI_PROVIDERS[formData.provider];
 
   return (
+    <RoleGuard allowed={["manager"]}>
     <div className="max-w-2xl mx-auto">
       {/* Header */}
       <div className="mb-8">
@@ -215,6 +217,7 @@ export default function NewProviderPage() {
         </form>
       </Card>
     </div>
+    </RoleGuard>
   );
 }
 

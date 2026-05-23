@@ -8,7 +8,7 @@ export async function getUserAuth() {
   return {
     userId,
     orgId,
-    role: (sessionClaims?.public_metadata?.role) || null,
+    role: (sessionClaims?.public_metadata?.role) || (sessionClaims?.unsafe_metadata?.role) || null,
   };
 }
 

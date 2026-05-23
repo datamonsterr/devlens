@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Card, CardSkeleton, Button, Input, Badge } from "@/shared/components";
 import { useRole } from "@/shared/hooks/useRole";
+import RoleGuard from "@/shared/components/RoleGuard";
 
 function formatTokens(n) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
@@ -11,6 +12,14 @@ function formatTokens(n) {
 }
 
 export default function RtkPoolPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <RtkPoolContent />
+    </RoleGuard>
+  );
+}
+
+function RtkPoolContent() {
   const { isManager } = useRole();
   const [pool, setPool] = useState(null);
   const [history, setHistory] = useState([]);

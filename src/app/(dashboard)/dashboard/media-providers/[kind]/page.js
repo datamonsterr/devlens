@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, Badge, Button, Toggle, AddCustomEmbeddingModal } from "@/shared/components";
 import ProviderIcon from "@/shared/components/ProviderIcon";
+import RoleGuard from "@/shared/components/RoleGuard";
 import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS, getProvidersByKind } from "@/shared/constants/providers";
 
 // Kinds that support combos (currently disabled for image/tts — temporarily hidden).
@@ -138,6 +139,14 @@ function ComboList({ combos }) {
 }
 
 export default function MediaProviderKindPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <MediaProviderKindContent />
+    </RoleGuard>
+  );
+}
+
+function MediaProviderKindContent() {
   const { kind } = useParams();
   const router = useRouter();
   const [connections, setConnections] = useState([]);

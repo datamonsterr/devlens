@@ -26,6 +26,7 @@ import { getErrorCode, getRelativeTime } from "@/shared/utils";
 import { useNotificationStore } from "@/store/notificationStore";
 import { useHeaderSearchStore } from "@/store/headerSearchStore";
 import { useRole } from "@/shared/hooks/useRole";
+import RoleGuard from "@/shared/components/RoleGuard";
 import ModelAvailabilityBadge from "./components/ModelAvailabilityBadge";
 
 function getStatusDisplay(connected, error, errorCode) {
@@ -98,6 +99,14 @@ function getConnectionErrorTag(connection) {
 const APIKEY_INITIAL_VISIBLE = 20;
 
 export default function ProvidersPage() {
+  return (
+    <RoleGuard allowed={["manager"]}>
+      <ProvidersContent />
+    </RoleGuard>
+  );
+}
+
+function ProvidersContent() {
   const [connections, setConnections] = useState([]);
   const [providerNodes, setProviderNodes] = useState([]);
   const [loading, setLoading] = useState(true);

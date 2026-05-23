@@ -1,11 +1,41 @@
 {
   "version": 1,
   "skills": {
+    "Turso CLI": {
+      "source": "ComposioHQ/awesome-agent-clis",
+      "sourceType": "github",
+      "skillPath": "turso-cli/SKILL.md",
+      "computedHash": "16c9a3333aa47d1b64d57e11c31f8e4cd5c29c2c57d74e9abeb1fd57bf45c04a"
+    },
+    "agent-browser": {
+      "source": "vercel-labs/agent-browser",
+      "sourceType": "github",
+      "skillPath": "skills/agent-browser/SKILL.md",
+      "computedHash": "228f87d57035100d9dc6efcfc05aafd4b6e3962adacaa04b8217ab2fadb15dc8"
+    },
+    "clerk-auth": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/clerk-auth/SKILL.md",
+      "computedHash": "95a768b8d2fca5ecfa0652d6721f5862bd7b3a8709bfa95faa6b63061803c02c"
+    },
+    "deploy-to-vercel": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deploy-to-vercel/SKILL.md",
+      "computedHash": "03e0eaaa9bf13ba1e7ffa387f5893de6f324c0868c627001f179395a8feaa7c9"
+    },
     "diagnose": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/diagnose/SKILL.md",
       "computedHash": "15939a26f86edec2d4862042b8564e5a062cb81d04e047a0cea6305c8830b5f5"
+    },
+    "find-skills": {
+      "source": "bytedance/deer-flow",
+      "sourceType": "github",
+      "skillPath": "skills/public/find-skills/SKILL.md",
+      "computedHash": "202da6ad9e3c65949fa70371e89b1f55a1f5bd6d11b20b4491af17de495a0caf"
     },
     "grill-me": {
       "source": "mattpocock/skills",
@@ -31,17 +61,35 @@
       "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
       "computedHash": "ef32aea0a8fab9b365ff9e08a95f8d353e20ca21ea46ec2e73587c86dd341351"
     },
+    "playwright-e2e-tester": {
+      "source": "erichowens/some_claude_skills",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/playwright-e2e-tester/SKILL.md",
+      "computedHash": "cffd20d20131ce6c0a635d0cbecf4a84da86be001243b77cd92e66ed2a6bffbc"
+    },
     "prototype": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/prototype/SKILL.md",
       "computedHash": "e4d0c8f8cb3fc096ee99405a15491da466545cf4a3694bee5a0c9db2fa621a43"
     },
+    "sqlite": {
+      "source": "InugamiDev/ultrathink-oss",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/sqlite/SKILL.md",
+      "computedHash": "60d951d25d17e9310d96bafa0fc65e13e6009a637ee316c8dfa1add55888c9cb"
+    },
     "tdd": {
       "source": "mattpocock/skills",
       "sourceType": "github",
       "skillPath": "skills/engineering/tdd/SKILL.md",
       "computedHash": "15a7b5e36383ebadb2dec5e586679e55e9663d292da418926b8da6fc0ef27d84"
+    },
+    "testing-expert": {
+      "source": "cin12211/orca-q",
+      "sourceType": "github",
+      "skillPath": ".github/skills/testing-expert/SKILL.md",
+      "computedHash": "bf121aa5c5c2f9c8968e8982bf12221965ea61c89fecdbe86e43b58c6043fc28"
     },
     "to-prd": {
       "source": "mattpocock/skills",

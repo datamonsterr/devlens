@@ -10,7 +10,7 @@ export async function GET() {
     const ctx = await requireTeamContext();
 
     const adapter = await getAdapter();
-    const team = adapter.get(
+    const team = await adapter.get(
       `SELECT rtkPool FROM teams WHERE id = ?`,
       [ctx.teamId]
     );
@@ -43,8 +43,8 @@ export async function PUT(request) {
 
     const adapter = await getAdapter();
 
-    adapter.transaction(() => {
-      const team = adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
+    await adapter.transaction(async () => {
+      const team = await adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
       if (!team) throw new Error("Team not found");
 
       let newPool;
@@ -58,19 +58,19 @@ export async function PUT(request) {
         action = amount >= 0 ? "allocate" : "consume";
       }
 
-      adapter.run(`UPDATE teams SET rtkPool = ?, updatedAt = ? WHERE id = ?`, [
+      await adapter.run(`UPDATE teams SET rtkPool = ?, updatedAt = ? WHERE id = ?`, [
         newPool,
         new Date().toISOString(),
         ctx.teamId,
       ]);
 
-      adapter.run(
+      await adapter.run(
         `INSERT INTO rtkPoolHistory(teamId, action, amount, remainingAfter, timestamp) VALUES(?, ?, ?, ?, ?)`,
         [ctx.teamId, action, Math.abs(amount), newPool, new Date().toISOString()]
       );
     });
 
-    const updated = adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
+    const updated = await adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
 
     return NextResponse.json({
       rtkPool: updated.rtkPool,

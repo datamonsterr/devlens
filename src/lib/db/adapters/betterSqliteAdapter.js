@@ -26,6 +26,8 @@ export function createBetterSqliteAdapter(filePath) {
   }, CHECKPOINT_INTERVAL_MS);
   if (typeof checkpointTimer.unref === "function") checkpointTimer.unref();
 
+  let txQueue = Promise.resolve();
+
   function gracefulClose() {
     try { db.pragma("wal_checkpoint(TRUNCATE)"); } catch {}
     try { stmtCache.clear(); } catch {}
@@ -44,7 +46,23 @@ export function createBetterSqliteAdapter(filePath) {
     get(sql, params = []) { return prepare(sql).get(params); },
     all(sql, params = []) { return prepare(sql).all(params); },
     exec(sql) { return db.exec(sql); },
-    transaction(fn) { return db.transaction(fn)(); },
+    transaction(fn) {
+      const runTx = async () => {
+        const sp = `tx_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+        db.exec(`SAVEPOINT ${sp}`);
+        try {
+          const result = await fn();
+          db.exec(`RELEASE ${sp}`);
+          return result;
+        } catch (error) {
+          try { db.exec(`ROLLBACK TO ${sp}`); db.exec(`RELEASE ${sp}`); } catch {}
+          throw error;
+        }
+      };
+      const next = txQueue.then(runTx, runTx);
+      txQueue = next.catch(() => {});
+      return next;
+    },
     checkpoint() { try { db.pragma("wal_checkpoint(TRUNCATE)"); } catch {} },
     close() {
       clearInterval(checkpointTimer);

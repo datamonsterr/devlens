@@ -15,14 +15,14 @@ function rowToProxyPool(row) {
 
 export async function getProxyPools() {
   const db = await getAdapter();
-  return db.all(`SELECT * FROM proxyPools ORDER BY updatedAt DESC`).map(rowToProxyPool);
+  return (await db.all(`SELECT * FROM proxyPools ORDER BY updatedAt DESC`)).map(rowToProxyPool);
 }
 
 export async function createProxyPool(data) {
   const db = await getAdapter();
   const now = new Date().toISOString();
   const pool = { id: uuidv4(), name: data.name, proxyUrl: data.proxyUrl, isActive: data.isActive !== false, createdAt: now, updatedAt: now };
-  db.run(
+  await db.run(
     `INSERT INTO proxyPools(id, name, proxyUrl, isActive, createdAt, updatedAt) VALUES(?, ?, ?, ?, ?, ?)`,
     [pool.id, pool.name, pool.proxyUrl, pool.isActive ? 1 : 0, pool.createdAt, pool.updatedAt]
   );
@@ -31,10 +31,10 @@ export async function createProxyPool(data) {
 
 export async function updateProxyPool(id, data) {
   const db = await getAdapter();
-  const existing = rowToProxyPool(db.get(`SELECT * FROM proxyPools WHERE id = ?`, [id]));
+  const existing = rowToProxyPool(await db.get(`SELECT * FROM proxyPools WHERE id = ?`, [id]));
   if (!existing) return null;
   const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
-  db.run(
+  await db.run(
     `UPDATE proxyPools SET name = ?, proxyUrl = ?, isActive = ?, updatedAt = ? WHERE id = ?`,
     [merged.name, merged.proxyUrl, merged.isActive ? 1 : 0, merged.updatedAt, id]
   );
@@ -43,6 +43,6 @@ export async function updateProxyPool(id, data) {
 
 export async function deleteProxyPool(id) {
   const db = await getAdapter();
-  const res = db.run(`DELETE FROM proxyPools WHERE id = ?`, [id]);
+  const res = await db.run(`DELETE FROM proxyPools WHERE id = ?`, [id]);
   return (res?.changes ?? 0) > 0;
 }

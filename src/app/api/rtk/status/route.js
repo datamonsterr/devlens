@@ -12,7 +12,7 @@ export async function GET() {
     }
 
     const adapter = await getAdapter();
-    const team = adapter.get(
+    const team = await adapter.get(
       `SELECT rtkPool FROM teams WHERE id = ?`,
       [ctx.teamId]
     );

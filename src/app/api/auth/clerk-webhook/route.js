@@ -20,7 +20,7 @@ function verifyClerkWebhook(body, svixId, svixTimestamp, svixSignature) {
 async function createTeam(adapter, org) {
   const teamId = uuidv4();
   const now = new Date().toISOString();
-  adapter.run(
+  await adapter.run(
     `INSERT INTO teams(id, name, clerkOrgId, rtkPool, createdAt, updatedAt) VALUES(?, ?, ?, 0, ?, ?)`,
     [teamId, org.name || "My Team", org.id, now, now]
   );
@@ -29,13 +29,13 @@ async function createTeam(adapter, org) {
 
 async function ensureUser(adapter, clerkUserId, teamId, role) {
   const now = new Date().toISOString();
-  const existing = adapter.get(`SELECT id FROM users WHERE clerkUserId = ?`, [clerkUserId]);
+  const existing = await adapter.get(`SELECT id FROM users WHERE clerkUserId = ?`, [clerkUserId]);
   if (existing) {
-    adapter.run(`UPDATE users SET teamId = ?, role = ?, updatedAt = ? WHERE clerkUserId = ?`, [teamId, role, now, clerkUserId]);
+    await adapter.run(`UPDATE users SET teamId = ?, role = ?, updatedAt = ? WHERE clerkUserId = ?`, [teamId, role, now, clerkUserId]);
     return existing.id;
   }
   const userId = uuidv4();
-  adapter.run(
+  await adapter.run(
     `INSERT INTO users(id, clerkUserId, teamId, role, isActive, createdAt, updatedAt) VALUES(?, ?, ?, ?, 1, ?, ?)`,
     [userId, clerkUserId, teamId, role, now, now]
   );
@@ -63,10 +63,10 @@ export async function POST(req) {
   const adapter = await getAdapter();
 
   try {
-    adapter.transaction(() => {
+    await adapter.transaction(async () => {
       switch (type) {
         case "organization.created": {
-          createTeam(adapter, data);
+          await createTeam(adapter, data);
           break;
         }
 
@@ -74,18 +74,18 @@ export async function POST(req) {
           const orgId = data.organization.id;
           const clerkUserId = data.public_user_data.user_id;
 
-          const team = adapter.get(`SELECT id FROM teams WHERE clerkOrgId = ?`, [orgId]);
+          const team = await adapter.get(`SELECT id FROM teams WHERE clerkOrgId = ?`, [orgId]);
           if (!team) break;
 
           const role = data.role === "org:admin" ? "manager" : "developer";
-          ensureUser(adapter, clerkUserId, team.id, role);
+          await ensureUser(adapter, clerkUserId, team.id, role);
           break;
         }
 
         case "user.updated": {
           const role = data.public_metadata?.role;
           if (role) {
-            adapter.run(`UPDATE users SET role = ?, updatedAt = ? WHERE clerkUserId = ?`, [role, new Date().toISOString(), data.id]);
+            await adapter.run(`UPDATE users SET role = ?, updatedAt = ? WHERE clerkUserId = ?`, [role, new Date().toISOString(), data.id]);
           }
           break;
         }

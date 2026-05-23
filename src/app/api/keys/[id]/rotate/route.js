@@ -11,7 +11,7 @@ export async function POST(request, { params }) {
     const { id } = await params;
 
     const adapter = await getAdapter();
-    const existing = adapter.get(
+    const existing = await adapter.get(
       `SELECT id, name, userId FROM apiKeys WHERE id = ? AND userId = ? AND isActive = 1`,
       [id, ctx.userId]
     );
@@ -24,9 +24,9 @@ export async function POST(request, { params }) {
     const newKeyHash = hashApiKey(newKeyValue);
     const now = new Date().toISOString();
 
-    adapter.transaction(() => {
-      adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ?`, [id]);
-      adapter.run(
+    await adapter.transaction(async () => {
+      await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ?`, [id]);
+      await adapter.run(
         `INSERT INTO apiKeys(id, keyHash, name, teamId, userId, isActive, createdAt) VALUES(?, ?, ?, ?, ?, 1, ?)`,
         [existing.id, newKeyHash, existing.name, ctx.teamId, ctx.userId, now]
       );

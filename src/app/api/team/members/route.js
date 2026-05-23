@@ -10,7 +10,7 @@ export async function GET() {
     const ctx = await requireManagerContext();
 
     const adapter = await getAdapter();
-    const members = adapter.all(
+    const members = await adapter.all(
       `SELECT u.id, u.clerkUserId, u.role, u.isActive, u.createdAt, u.updatedAt,
         COUNT(ak.id) as apiKeyCount,
         SUM(CASE WHEN ak.isActive = 1 THEN 1 ELSE 0 END) as activeApiKeyCount,
@@ -89,10 +89,10 @@ export async function DELETE(request) {
     const now = new Date().toISOString();
 
     // Mark user inactive
-    adapter.run(`UPDATE users SET isActive = 0, updatedAt = ? WHERE id = ? AND teamId = ?`, [now, userId, ctx.teamId]);
+    await adapter.run(`UPDATE users SET isActive = 0, updatedAt = ? WHERE id = ? AND teamId = ?`, [now, userId, ctx.teamId]);
 
     // Revoke all API keys
-    adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE userId = ?`, [userId]);
+    await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE userId = ?`, [userId]);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

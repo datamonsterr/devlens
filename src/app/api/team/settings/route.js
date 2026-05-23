@@ -10,7 +10,7 @@ export async function GET() {
     }
 
     const adapter = await getAdapter();
-    let settings = adapter.get(
+    let settings = await adapter.get(
       `SELECT maxKeysPerDeveloper, data FROM teamSettings WHERE teamId = ?`,
       [ctx.teamId]
     );
@@ -36,7 +36,7 @@ export async function PUT(request) {
     const body = await request.json();
     const adapter = await getAdapter();
 
-    adapter.run(
+    await adapter.run(
       `INSERT INTO teamSettings(teamId, maxKeysPerDeveloper, data) VALUES(?, ?, ?) ON CONFLICT(teamId) DO UPDATE SET maxKeysPerDeveloper = excluded.maxKeysPerDeveloper, data = excluded.data`,
       [ctx.teamId, body.maxKeysPerDeveloper || 5, JSON.stringify(body.data || {})]
     );

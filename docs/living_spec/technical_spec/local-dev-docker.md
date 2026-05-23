@@ -1,26 +1,16 @@
-# Local dev and Docker
+# Local development and Docker
 
-## Local port
+Local development can run without Turso credentials. If `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` are unset, Devlens stores SQLite data under `DATA_DIR`.
 
-Use `20261` for Devlens local app unless task explicitly chooses another `2026x` port.
+Use `DATA_DIR=/var/lib/devlens` in containers when local SQLite persistence is desired. Mount that path as a volume.
 
-## Development
+For Turso-backed local testing, set:
 
-```bash
-npm install
-npm run dev
+```sh
+TURSO_DATABASE_URL=libsql://your-db.turso.io
+TURSO_AUTH_TOKEN=change-me
 ```
 
-Expected app URL after port migration:
+Do not bake real Turso tokens into Docker images or committed env files. Use local `.env`, orchestration secrets, or Vercel env vars.
 
-```text
-http://localhost:20261
-```
-
-## Docker
-
-Docker Compose should run one Next.js app service with mounted SQLite data volume.
-
-## 9router change
-
-Existing `20128` references must migrate to `20261` to avoid current 9router port range.
+Port guidance: Devlens dev ports should stay in `2026x` range for local agent work.

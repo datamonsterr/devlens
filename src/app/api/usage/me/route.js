@@ -29,12 +29,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const start = range(searchParams.get("period") || "7d");
     const db = await getAdapter();
-    const rows = db.all(
+    const rows = await db.all(
       `SELECT provider, model, COUNT(*) requests, COALESCE(SUM(promptTokens), 0) promptTokens, COALESCE(SUM(completionTokens), 0) completionTokens, COALESCE(SUM(cost), 0) cost
        FROM usageHistory WHERE teamId = ? AND userId = ? AND timestamp >= ? GROUP BY provider, model ORDER BY requests DESC`,
       [ctx.teamId, ctx.userId, start]
     );
-    const recentActivity = db.all(
+    const recentActivity = await db.all(
       `SELECT timestamp, provider, model, endpoint, status, promptTokens, completionTokens, cost FROM usageHistory WHERE teamId = ? AND userId = ? AND timestamp >= ? ORDER BY timestamp DESC LIMIT 25`,
       [ctx.teamId, ctx.userId, start]
     );

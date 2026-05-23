@@ -11,11 +11,11 @@ export async function GET(request, { params }) {
 
     const adapter = await getAdapter();
     const key = ctx.role === "manager"
-      ? adapter.get(
+      ? await adapter.get(
         `SELECT id, name, isActive, lastUsedAt, createdAt, userId FROM apiKeys WHERE id = ? AND teamId = ?`,
         [id, ctx.teamId]
       )
-      : adapter.get(
+      : await adapter.get(
         `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE id = ? AND userId = ?`,
         [id, ctx.userId]
       );
@@ -39,9 +39,9 @@ export async function DELETE(request, { params }) {
     const adapter = await getAdapter();
 
     if (ctx.role === "manager") {
-      adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND teamId = ?`, [id, ctx.teamId]);
+      await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND teamId = ?`, [id, ctx.teamId]);
     } else {
-      adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND userId = ?`, [id, ctx.userId]);
+      await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND userId = ?`, [id, ctx.userId]);
     }
 
     return NextResponse.json({ success: true });

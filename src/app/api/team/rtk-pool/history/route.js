@@ -11,7 +11,7 @@ export async function GET() {
     await assertManager();
 
     const adapter = await getAdapter();
-    const history = adapter.all(
+    const history = await adapter.all(
       `SELECT action, amount, remainingAfter, timestamp
        FROM rtkPoolHistory
        WHERE teamId = ?

@@ -16,6 +16,7 @@ function rowToConn(row) {
   return {
     ...extra,
     id: row.id,
+    teamId: row.teamId,
     provider: row.provider,
     authType: row.authType,
     name: row.name,
@@ -28,9 +29,10 @@ function rowToConn(row) {
 }
 
 function connToRow(c) {
-  const { id, provider, authType, name, email, priority, isActive, createdAt, updatedAt, ...rest } = c;
+  const { id, teamId, provider, authType, name, email, priority, isActive, createdAt, updatedAt, ...rest } = c;
   return {
     id,
+    teamId: teamId ?? null,
     provider,
     authType,
     name: name ?? null,
@@ -46,13 +48,13 @@ function connToRow(c) {
 function upsert(db, c) {
   const r = connToRow(c);
   db.run(
-    `INSERT INTO providerConnections(id, provider, authType, name, email, priority, isActive, data, createdAt, updatedAt)
-     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `INSERT INTO providerConnections(id, teamId, provider, authType, name, email, priority, isActive, data, createdAt, updatedAt)
+     VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
      ON CONFLICT(id) DO UPDATE SET
-       provider=excluded.provider, authType=excluded.authType, name=excluded.name,
+       teamId=excluded.teamId, provider=excluded.provider, authType=excluded.authType, name=excluded.name,
        email=excluded.email, priority=excluded.priority, isActive=excluded.isActive,
        data=excluded.data, updatedAt=excluded.updatedAt`,
-    [r.id, r.provider, r.authType, r.name, r.email, r.priority, r.isActive, r.data, r.createdAt, r.updatedAt]
+    [r.id, r.teamId, r.provider, r.authType, r.name, r.email, r.priority, r.isActive, r.data, r.createdAt, r.updatedAt]
   );
 }
 
@@ -60,6 +62,7 @@ export async function getProviderConnections(filter = {}) {
   const db = await getAdapter();
   const where = [];
   const params = [];
+  if (filter.teamId != null) { where.push("teamId = ?"); params.push(filter.teamId); }
   if (filter.provider) { where.push("provider = ?"); params.push(filter.provider); }
   if (filter.isActive !== undefined) { where.push("isActive = ?"); params.push(filter.isActive ? 1 : 0); }
   const sql = `SELECT * FROM providerConnections${where.length ? ` WHERE ${where.join(" AND ")}` : ""}`;
@@ -69,15 +72,19 @@ export async function getProviderConnections(filter = {}) {
   return list;
 }
 
-export async function getProviderConnectionById(id) {
+export async function getProviderConnectionById(id, teamId) {
   const db = await getAdapter();
-  const row = db.get(`SELECT * FROM providerConnections WHERE id = ?`, [id]);
+  const row = teamId != null
+    ? db.get(`SELECT * FROM providerConnections WHERE id = ? AND teamId = ?`, [id, teamId])
+    : db.get(`SELECT * FROM providerConnections WHERE id = ?`, [id]);
   return rowToConn(row);
 }
 
 // Internal sync reorder — must be called INSIDE a transaction
-function reorderInTx(db, providerId) {
-  const list = db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [providerId]).map(rowToConn);
+function reorderInTx(db, providerId, teamId) {
+  const list = teamId != null
+    ? db.all(`SELECT * FROM providerConnections WHERE provider = ? AND teamId = ?`, [providerId, teamId]).map(rowToConn)
+    : db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [providerId]).map(rowToConn);
   list.sort((a, b) => {
     const pDiff = (a.priority || 0) - (b.priority || 0);
     if (pDiff !== 0) return pDiff;
@@ -94,7 +101,9 @@ export async function createProviderConnection(data) {
   let result;
 
   db.transaction(() => {
-    const all = db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [data.provider]).map(rowToConn);
+    const all = data.teamId != null
+      ? db.all(`SELECT * FROM providerConnections WHERE provider = ? AND teamId = ?`, [data.provider, data.teamId]).map(rowToConn)
+      : db.all(`SELECT * FROM providerConnections WHERE provider = ?`, [data.provider]).map(rowToConn);
 
     let existing = null;
     if (data.authType === "oauth" && data.email) {
@@ -129,6 +138,7 @@ export async function createProviderConnection(data) {
 
     const conn = {
       id: uuidv4(),
+      teamId: data.teamId ?? null,
       provider: data.provider,
       authType: data.authType || "oauth",
       name: connectionName,
@@ -146,7 +156,7 @@ export async function createProviderConnection(data) {
     if (data.email !== undefined) conn.email = data.email;
 
     upsert(db, conn);
-    reorderInTx(db, data.provider);
+    reorderInTx(db, data.provider, data.teamId);
     result = conn;
   });
 
@@ -163,7 +173,7 @@ export async function updateProviderConnection(id, data) {
     const existing = rowToConn(row);
     const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
     upsert(db, merged);
-    if (data.priority !== undefined) reorderInTx(db, existing.provider);
+    if (data.priority !== undefined) reorderInTx(db, existing.provider, existing.teamId);
     result = merged;
   });
   return result;
@@ -173,25 +183,31 @@ export async function deleteProviderConnection(id) {
   const db = await getAdapter();
   let ok = false;
   db.transaction(() => {
-    const row = db.get(`SELECT provider FROM providerConnections WHERE id = ?`, [id]);
+    const row = db.get(`SELECT provider, teamId FROM providerConnections WHERE id = ?`, [id]);
     if (!row) return;
     db.run(`DELETE FROM providerConnections WHERE id = ?`, [id]);
-    reorderInTx(db, row.provider);
+    reorderInTx(db, row.provider, row.teamId);
     ok = true;
   });
   return ok;
 }
 
-export async function deleteProviderConnectionsByProvider(providerId) {
+export async function deleteProviderConnectionsByProvider(providerId, teamId) {
   const db = await getAdapter();
-  const before = db.get(`SELECT COUNT(*) AS n FROM providerConnections WHERE provider = ?`, [providerId]);
-  db.run(`DELETE FROM providerConnections WHERE provider = ?`, [providerId]);
+  const before = teamId != null
+    ? db.get(`SELECT COUNT(*) AS n FROM providerConnections WHERE provider = ? AND teamId = ?`, [providerId, teamId])
+    : db.get(`SELECT COUNT(*) AS n FROM providerConnections WHERE provider = ?`, [providerId]);
+  if (teamId != null) {
+    db.run(`DELETE FROM providerConnections WHERE provider = ? AND teamId = ?`, [providerId, teamId]);
+  } else {
+    db.run(`DELETE FROM providerConnections WHERE provider = ?`, [providerId]);
+  }
   return before?.n || 0;
 }
 
-export async function reorderProviderConnections(providerId) {
+export async function reorderProviderConnections(providerId, teamId) {
   const db = await getAdapter();
-  db.transaction(() => reorderInTx(db, providerId));
+  db.transaction(() => reorderInTx(db, providerId, teamId));
 }
 
 export async function cleanupProviderConnections() {

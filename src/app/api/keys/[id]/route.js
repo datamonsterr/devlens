@@ -10,10 +10,15 @@ export async function GET(request, { params }) {
     const { id } = await params;
 
     const adapter = await getAdapter();
-    const key = adapter.get(
-      `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE id = ? AND (userId = ? OR teamId = ?)`,
-      [id, ctx.userId, ctx.teamId]
-    );
+    const key = ctx.role === "manager"
+      ? adapter.get(
+        `SELECT id, name, isActive, lastUsedAt, createdAt, userId FROM apiKeys WHERE id = ? AND teamId = ?`,
+        [id, ctx.teamId]
+      )
+      : adapter.get(
+        `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE id = ? AND userId = ?`,
+        [id, ctx.userId]
+      );
 
     if (!key) {
       return NextResponse.json({ error: "Key not found" }, { status: 404 });

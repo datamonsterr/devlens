@@ -23,15 +23,20 @@ const sharedItems = [
 ];
 
 const managerItems = [
+  { href: "/dashboard/usage", label: "Overview", icon: "bar_chart" },
+  { href: "/dashboard/team", label: "Team", icon: "groups" },
   { href: "/dashboard/providers", label: "Providers", icon: "dns" },
   { href: "/dashboard/combos", label: "Combos", icon: "layers" },
-  { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
-  { href: "/dashboard/quota", label: "Quota Tracker", icon: "data_usage" },
+  { href: "/dashboard/quota", label: "RTK Pool", icon: "data_usage" },
   { href: "/dashboard/pricing", label: "Pricing", icon: "sell" },
 ];
 
 const developerItems = [
   { href: "/dashboard/models", label: "Models", icon: "hub" },
+  { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
+  { href: "/dashboard/cli-tools", label: "CLI Config", icon: "terminal" },
+  { href: "/dashboard/profile", label: "Account", icon: "account_circle" },
+  { href: "/dashboard/console-log", label: "Console Log", icon: "terminal" },
 ];
 
 const debugItems = [

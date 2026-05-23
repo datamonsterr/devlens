@@ -42,7 +42,15 @@ function formatArg(arg) {
   }
 }
 
+export function maskConsoleLog(line) {
+  return String(line)
+    .replace(/Bearer\s+[A-Za-z0-9._\-]+/g, "Bearer [REDACTED]")
+    .replace(/dvl_[A-Za-z0-9_\-]+/g, "dvl_[REDACTED]")
+    .replace(/(api[_-]?key|access[_-]?token|refresh[_-]?token|authorization)(["'\s:=]+)([^"'\s,}]+)/gi, "$1$2[REDACTED]");
+}
+
 function appendLine(line) {
+  line = maskConsoleLog(line);
   state.logs.push(line);
   const maxLines = CONSOLE_LOG_CONFIG.maxLines;
   if (state.logs.length > maxLines) {

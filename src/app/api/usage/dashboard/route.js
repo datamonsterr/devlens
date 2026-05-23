@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireTeamContext } from "@/lib/auth";
-import { assertManager } from "@/lib/auth";
+import { requireManagerContext } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
 import { parseJson } from "@/lib/db/helpers/jsonCol";
 
@@ -28,8 +27,7 @@ function getDateRange(period) {
 
 export async function GET(request) {
   try {
-    const ctx = await requireTeamContext();
-    await assertManager();
+    const ctx = await requireManagerContext();
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get("period") || "7d";
@@ -108,6 +106,12 @@ export async function GET(request) {
     // Time-series chart data (daily buckets)
     const chartData = await getChartData(adapter, ctx.teamId, start, bucketCount);
 
+    const recentActivity = adapter.all(
+      `SELECT timestamp, userId, provider, model, endpoint, status, promptTokens, completionTokens, cost
+       FROM usageHistory WHERE teamId = ? AND timestamp >= ? ORDER BY timestamp DESC LIMIT 25`,
+      [ctx.teamId, start]
+    );
+
     return NextResponse.json({
       period,
       overview: {
@@ -147,6 +151,7 @@ export async function GET(request) {
         cost: Math.round(p.cost * 10000) / 10000,
       })),
       chartData,
+      recentActivity,
     });
   } catch (error) {
     if (error instanceof Response) throw error;

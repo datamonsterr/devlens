@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getCombos, createCombo, getComboByName } from "@/lib/localDb";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,8 @@ const VALID_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
 // GET /api/combos - Get all combos
 export async function GET() {
   try {
-    const combos = await getCombos();
+    const ctx = await requireTeamContext();
+    const combos = await getCombos(ctx.teamId);
     return NextResponse.json({ combos });
   } catch (error) {
     console.log("Error fetching combos:", error);
@@ -21,7 +22,7 @@ export async function GET() {
 // POST /api/combos - Create new combo
 export async function POST(request) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const body = await request.json();
     const { name, models, kind } = body;
 
@@ -35,12 +36,12 @@ export async function POST(request) {
     }
 
     // Check if name already exists
-    const existing = await getComboByName(name);
+    const existing = await getComboByName(name, ctx.teamId);
     if (existing) {
       return NextResponse.json({ error: "Combo name already exists" }, { status: 400 });
     }
 
-    const combo = await createCombo({ name, models: models || [], kind: kind || null });
+    const combo = await createCombo({ teamId: ctx.teamId, name, models: models || [], kind: kind || null });
 
     return NextResponse.json(combo, { status: 201 });
   } catch (error) {

@@ -5,7 +5,6 @@ function rowToKey(row) {
   if (!row) return null;
   return {
     id: row.id,
-    key: row.key,
     name: row.name,
     machineId: row.machineId,
     isActive: row.isActive === 1 || row.isActive === true,
@@ -53,8 +52,8 @@ export async function updateApiKey(id, data) {
     if (!row) return;
     const merged = { ...rowToKey(row), ...data };
     db.run(
-      `UPDATE apiKeys SET key = ?, name = ?, machineId = ?, isActive = ? WHERE id = ?`,
-      [merged.key, merged.name, merged.machineId, merged.isActive ? 1 : 0, id]
+      `UPDATE apiKeys SET name = ?, machineId = ?, isActive = ? WHERE id = ?`,
+      [merged.name, merged.machineId, merged.isActive ? 1 : 0, id]
     );
     result = merged;
   });

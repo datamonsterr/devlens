@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getComboById, updateCombo, deleteCombo, getComboByName } from "@/lib/localDb";
 import { resetComboRotation } from "open-sse/services/combo.js";
 
@@ -9,8 +9,9 @@ const VALID_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
 // GET /api/combos/[id] - Get combo by ID
 export async function GET(request, { params }) {
   try {
+    const ctx = await requireTeamContext();
     const { id } = await params;
-    const combo = await getComboById(id);
+    const combo = await getComboById(id, ctx.teamId);
     
     if (!combo) {
       return NextResponse.json({ error: "Combo not found" }, { status: 404 });
@@ -26,7 +27,7 @@ export async function GET(request, { params }) {
 // PUT /api/combos/[id] - Update combo
 export async function PUT(request, { params }) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const { id } = await params;
     const body = await request.json();
     
@@ -37,15 +38,15 @@ export async function PUT(request, { params }) {
       }
       
       // Check if name already exists (exclude current combo)
-      const existing = await getComboByName(body.name);
+      const existing = await getComboByName(body.name, ctx.teamId);
       if (existing && existing.id !== id) {
         return NextResponse.json({ error: "Combo name already exists" }, { status: 400 });
       }
     }
     
     // Capture previous name to invalidate rotation state on rename
-    const prev = await getComboById(id);
-    const combo = await updateCombo(id, body);
+    const prev = await getComboById(id, ctx.teamId);
+    const combo = prev ? await updateCombo(id, body) : null;
     
     if (!combo) {
       return NextResponse.json({ error: "Combo not found" }, { status: 404 });
@@ -65,10 +66,10 @@ export async function PUT(request, { params }) {
 // DELETE /api/combos/[id] - Delete combo
 export async function DELETE(request, { params }) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const { id } = await params;
-    const prev = await getComboById(id);
-    const success = await deleteCombo(id);
+    const prev = await getComboById(id, ctx.teamId);
+    const success = prev ? await deleteCombo(id) : false;
     
     if (!success) {
       return NextResponse.json({ error: "Combo not found" }, { status: 404 });

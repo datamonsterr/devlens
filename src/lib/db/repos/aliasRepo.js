@@ -6,17 +6,31 @@ const aliasKv = makeKv("modelAliases");
 const customKv = makeKv("customModels");
 const mitmKv = makeKv("mitmAlias");
 
+function teamKey(teamId, key) {
+  return teamId ? `${teamId}:${key}` : key;
+}
+
+function stripTeamAliases(rows, teamId) {
+  if (!teamId) return rows;
+  const prefix = `${teamId}:`;
+  return Object.fromEntries(
+    Object.entries(rows)
+      .filter(([key]) => key.startsWith(prefix))
+      .map(([key, value]) => [key.slice(prefix.length), value])
+  );
+}
+
 // modelAliases: key=alias, value=modelString
-export async function getModelAliases() {
-  return await aliasKv.getAll();
+export async function getModelAliases(teamId) {
+  return stripTeamAliases(await aliasKv.getAll(), teamId);
 }
 
-export async function setModelAlias(alias, model) {
-  await aliasKv.set(alias, model);
+export async function setModelAlias(alias, model, teamId) {
+  await aliasKv.set(teamKey(teamId, alias), model);
 }
 
-export async function deleteModelAlias(alias) {
-  await aliasKv.remove(alias);
+export async function deleteModelAlias(alias, teamId) {
+  await aliasKv.remove(teamKey(teamId, alias));
 }
 
 // customModels: key=`${providerAlias}|${id}|${type}`, value=full model object
@@ -24,14 +38,18 @@ function customKey(providerAlias, id, type) {
   return `${providerAlias}|${id}|${type}`;
 }
 
-export async function getCustomModels() {
+export async function getCustomModels(teamId) {
   const all = await customKv.getAll();
-  return Object.values(all);
+  if (!teamId) return Object.values(all);
+  const prefix = `${teamId}:`;
+  return Object.entries(all)
+    .filter(([key]) => key.startsWith(prefix))
+    .map(([, value]) => value);
 }
 
 // Atomic check-then-insert inside transaction to prevent duplicate races
-export async function addCustomModel({ providerAlias, id, type = "llm", name }) {
-  const k = customKey(providerAlias, id, type);
+export async function addCustomModel({ teamId, providerAlias, id, type = "llm", name }) {
+  const k = teamKey(teamId, customKey(providerAlias, id, type));
   const db = await getAdapter();
   let added = false;
   db.transaction(() => {
@@ -44,8 +62,8 @@ export async function addCustomModel({ providerAlias, id, type = "llm", name }) 
   return added;
 }
 
-export async function deleteCustomModel({ providerAlias, id, type = "llm" }) {
-  await customKv.remove(customKey(providerAlias, id, type));
+export async function deleteCustomModel({ teamId, providerAlias, id, type = "llm" }) {
+  await customKv.remove(teamKey(teamId, customKey(providerAlias, id, type)));
 }
 
 // mitmAlias: key=toolName, value=mappings object

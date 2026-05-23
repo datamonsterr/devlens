@@ -91,7 +91,7 @@ export async function handleChat(request, authContext = null, clientRawRequest =
   if (bypassResponse) return bypassResponse.response || bypassResponse;
 
   // Check if model is a combo (has multiple models with fallback)
-  const comboModels = await getComboModels(modelStr);
+    const comboModels = await getComboModels(modelStr, authContext?.teamId);
   if (comboModels) {
     // Check for combo-specific strategy first, fallback to global
     const comboStrategies = settings.comboStrategies || {};
@@ -103,7 +103,7 @@ export async function handleChat(request, authContext = null, clientRawRequest =
     return handleComboChat({
       body,
       models: comboModels,
-      handleSingleModel: (b, m) => handleSingleModelChat(b, m, clientRawRequest, request, apiKey),
+        handleSingleModel: (b, m) => handleSingleModelChat(b, m, clientRawRequest, request, apiKey, authContext),
       log,
       comboName: modelStr,
       comboStrategy,
@@ -112,18 +112,18 @@ export async function handleChat(request, authContext = null, clientRawRequest =
   }
 
   // Single model request
-  return handleSingleModelChat(body, modelStr, clientRawRequest, request, apiKey);
+  return handleSingleModelChat(body, modelStr, clientRawRequest, request, apiKey, authContext);
 }
 
 /**
  * Handle single model chat request
  */
-async function handleSingleModelChat(body, modelStr, clientRawRequest = null, request = null, apiKey = null) {
-  const modelInfo = await getModelInfo(modelStr);
+async function handleSingleModelChat(body, modelStr, clientRawRequest = null, request = null, apiKey = null, authContext = null) {
+  const modelInfo = await getModelInfo(modelStr, authContext?.teamId);
 
   // If provider is null, this might be a combo name - check and handle
   if (!modelInfo.provider) {
-    const comboModels = await getComboModels(modelStr);
+  const comboModels = await getComboModels(modelStr, authContext?.teamId);
     if (comboModels) {
       const chatSettings = await getSettings();
       // Check for combo-specific strategy first, fallback to global
@@ -136,7 +136,7 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       return handleComboChat({
         body,
         models: comboModels,
-        handleSingleModel: (b, m) => handleSingleModelChat(b, m, clientRawRequest, request, apiKey),
+      handleSingleModel: (b, m) => handleSingleModelChat(b, m, clientRawRequest, request, apiKey, authContext),
         log,
         comboName: modelStr,
         comboStrategy,
@@ -165,7 +165,7 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
   let lastStatus = null;
 
   while (true) {
-    const credentials = await getProviderCredentials(provider, excludeConnectionIds, model);
+    const credentials = await getProviderCredentials(provider, excludeConnectionIds, model, { teamId: authContext?.teamId });
 
     // All accounts unavailable
     if (!credentials || credentials.allRateLimited) {
@@ -210,6 +210,7 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       connectionId: credentials.connectionId,
       userAgent,
       apiKey,
+      authContext,
       ccFilterNaming: !!chatSettings.ccFilterNaming,
       rtkEnabled: !!chatSettings.rtkEnabled,
       rtkTeamId: authContext?.teamId || null,

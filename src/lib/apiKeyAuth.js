@@ -36,6 +36,7 @@ export async function authenticateApiKey(request) {
       } catch { /* non-critical */ }
 
       return {
+        apiKeyId: ak.id,
         userId: ak.userId,
         teamId: ak.teamId,
         role: user.role,

@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { requireManagerContext, requireTeamRole } from "./teamContext.js";
 
 export async function getUserAuth() {
   const { userId, orgId, sessionClaims } = await auth();
@@ -34,10 +35,9 @@ export function requireManager() {
 }
 
 export async function assertRole(allowedRoles) {
-  const result = await requireRole(allowedRoles)();
-  if (result) throw new Response(JSON.stringify({ error: result.error }), { status: result.status });
+  await requireTeamRole(allowedRoles);
 }
 
 export async function assertManager() {
-  await assertRole("manager");
+  await requireManagerContext();
 }

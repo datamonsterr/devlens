@@ -24,6 +24,7 @@ async function setupTestContext(nodeData) {
     getUserAuth: vi.fn().mockResolvedValue({ userId: "test-user", orgId: "test-org", role: "manager" }),
     getTeamContext: vi.fn().mockResolvedValue({ teamId: "test-team", userId: "test-user", role: "manager" }),
     requireTeamContext: vi.fn().mockResolvedValue({ teamId: "test-team", userId: "test-user", role: "manager" }),
+    requireManagerContext: vi.fn().mockResolvedValue({ teamId: "test-team", userId: "test-user", role: "manager" }),
   }));
 
   const { POST } = await import("@/app/api/providers/route.js");
@@ -31,6 +32,11 @@ async function setupTestContext(nodeData) {
     createProviderNode,
     getProviderConnections,
   } = await import("@/models/index.js");
+
+  const { getAdapter } = await import("@/lib/db/driver.js");
+  const db = await getAdapter();
+  const now = new Date().toISOString();
+  db.run(`INSERT OR REPLACE INTO teams(id, name, clerkOrgId, createdAt, updatedAt) VALUES(?, ?, ?, ?, ?)`, ["test-team", "Test Team", "test-org", now, now]);
 
   const node = await createProviderNode(nodeData);
 

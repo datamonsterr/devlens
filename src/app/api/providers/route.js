@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import {
   getProviderConnections,
   createProviderConnection,
@@ -31,7 +31,8 @@ function normalizeProxyConfig(body = {}) {
 // GET /api/providers - List all connections
 export async function GET() {
   try {
-    const connections = await getProviderConnections();
+    const ctx = await requireTeamContext();
+    const connections = await getProviderConnections({ teamId: ctx.teamId });
 
     // Build nodeNameMap for compatible providers (id → name)
     let nodeNameMap = {};
@@ -68,7 +69,7 @@ export async function GET() {
 // POST /api/providers - Create new connection (API Key only, OAuth via separate flow)
 export async function POST(request) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const body = await request.json();
     const provider = normalizeProviderId(body.provider);
     const { apiKey, name, displayName, priority, globalPriority, defaultModel, testStatus } = body;
@@ -140,6 +141,7 @@ export async function POST(request) {
     };
 
     const newConnection = await createProviderConnection({
+      teamId: ctx.teamId,
       provider,
       authType: isWebCookieProvider ? "cookie" : "apikey",
       name: connectionName,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireTeamContext } from "@/lib/auth";
+import { requireManagerContext } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
 import { v4 as uuidv4 } from "uuid";
 
@@ -7,14 +7,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const ctx = await requireTeamContext();
-    if (ctx.role !== "manager") {
-      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
-    }
+    const ctx = await requireManagerContext();
 
     const adapter = await getAdapter();
     const members = adapter.all(
-      `SELECT id, clerkUserId, role, isActive, createdAt, updatedAt FROM users WHERE teamId = ?`,
+      `SELECT u.id, u.clerkUserId, u.role, u.isActive, u.createdAt, u.updatedAt,
+        COUNT(ak.id) as apiKeyCount,
+        SUM(CASE WHEN ak.isActive = 1 THEN 1 ELSE 0 END) as activeApiKeyCount,
+        MAX(ak.lastUsedAt) as lastKeyUsedAt
+       FROM users u
+       LEFT JOIN apiKeys ak ON ak.userId = u.id
+       WHERE u.teamId = ?
+       GROUP BY u.id
+       ORDER BY u.createdAt ASC`,
       [ctx.teamId]
     );
 
@@ -27,10 +32,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const ctx = await requireTeamContext();
-    if (ctx.role !== "manager") {
-      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
-    }
+    const ctx = await requireManagerContext();
 
     const body = await request.json();
     const { email } = body;
@@ -75,10 +77,7 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const ctx = await requireTeamContext();
-    if (ctx.role !== "manager") {
-      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
-    }
+    const ctx = await requireManagerContext();
 
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get("userId");

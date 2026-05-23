@@ -1,5 +1,5 @@
 // Latest schema version — bumped when a migration is added in ./migrations/
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const PRAGMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -46,6 +46,17 @@ export const TABLES = {
       "CREATE INDEX IF NOT EXISTS idx_pc_provider_active ON providerConnections(provider, isActive)",
       "CREATE INDEX IF NOT EXISTS idx_pc_priority ON providerConnections(provider, priority)",
     ],
+  },
+  proxyPools: {
+    columns: {
+      id: "TEXT PRIMARY KEY",
+      name: "TEXT NOT NULL",
+      proxyUrl: "TEXT NOT NULL",
+      isActive: "INTEGER DEFAULT 1",
+      createdAt: "TEXT NOT NULL",
+      updatedAt: "TEXT NOT NULL",
+    },
+    indexes: ["CREATE INDEX IF NOT EXISTS idx_proxy_pools_updated ON proxyPools(updatedAt DESC)"],
   },
   providerNodes: {
     columns: {

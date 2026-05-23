@@ -40,7 +40,7 @@ function exportCSV(data) {
 }
 
 export default function UsageDashboardPage() {
-  const { isManager } = useRole();
+  const { isManager, isDeveloper } = useRole();
   const [period, setPeriod] = useState("7d");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,7 +50,8 @@ export default function UsageDashboardPage() {
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-      const res = await fetch(`/api/usage/dashboard?period=${period}`);
+      const endpoint = isDeveloper ? "/api/usage/me" : "/api/usage/dashboard";
+      const res = await fetch(`${endpoint}?period=${period}`);
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Failed to load dashboard");
@@ -65,7 +66,7 @@ export default function UsageDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, isDeveloper]);
 
   useEffect(() => {
     setLoading(true);
@@ -73,22 +74,6 @@ export default function UsageDashboardPage() {
     intervalRef.current = setInterval(fetchData, 60000);
     return () => clearInterval(intervalRef.current);
   }, [fetchData]);
-
-  if (!isManager) {
-    return (
-      <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
-        <Card>
-          <div className="text-center py-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
-              <span className="material-symbols-outlined text-[32px]">bar_chart</span>
-            </div>
-            <h3 className="text-lg font-medium">Usage Dashboard</h3>
-            <p className="text-sm text-text-muted mt-2">Only team managers can view the usage dashboard.</p>
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   if (loading && !data) {
     return (
@@ -111,8 +96,8 @@ export default function UsageDashboardPage() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Usage Dashboard</h1>
-          <p className="text-sm text-text-muted mt-1">Team-wide analytics and cost tracking</p>
+          <h1 className="text-2xl font-semibold">{isManager ? "Usage Dashboard" : "My Usage"}</h1>
+          <p className="text-sm text-text-muted mt-1">{isManager ? "Team-wide analytics and cost tracking" : "Personal usage and cost tracking"}</p>
         </div>
         <div className="flex items-center gap-2">
           <SegmentedControl

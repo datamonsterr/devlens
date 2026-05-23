@@ -1,4 +1,4 @@
-import { getConsoleLogs, getConsoleEmitter, initConsoleLogCapture } from "@/lib/consoleLogBuffer";
+import { getConsoleLogs, getConsoleEmitter, initConsoleLogCapture, maskConsoleLog } from "@/lib/consoleLogBuffer";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export async function GET(request) {
   const stream = new ReadableStream({
     start(controller) {
       // Send all buffered logs immediately on connect
-      const buffered = getConsoleLogs();
+      const buffered = getConsoleLogs().map(maskConsoleLog);
       if (buffered.length > 0) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "init", logs: buffered })}\n\n`));
       }
@@ -34,7 +34,7 @@ export async function GET(request) {
       state.send = (line) => {
         if (state.closed) return;
         try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "line", line })}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "line", line: maskConsoleLog(line) })}\n\n`));
         } catch {
           cleanup();
         }

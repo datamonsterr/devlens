@@ -6,6 +6,7 @@ function rowToCombo(row) {
   if (!row) return null;
   return {
     id: row.id,
+    teamId: row.teamId,
     name: row.name,
     kind: row.kind,
     models: parseJson(row.models, []),
@@ -14,21 +15,27 @@ function rowToCombo(row) {
   };
 }
 
-export async function getCombos() {
+export async function getCombos(teamId) {
   const db = await getAdapter();
-  const rows = db.all(`SELECT * FROM combos ORDER BY createdAt ASC`);
+  const rows = teamId !== undefined
+    ? db.all(`SELECT * FROM combos WHERE teamId = ? ORDER BY createdAt ASC`, [teamId])
+    : db.all(`SELECT * FROM combos ORDER BY createdAt ASC`);
   return rows.map(rowToCombo);
 }
 
-export async function getComboById(id) {
+export async function getComboById(id, teamId) {
   const db = await getAdapter();
-  const row = db.get(`SELECT * FROM combos WHERE id = ?`, [id]);
+  const row = teamId !== undefined
+    ? db.get(`SELECT * FROM combos WHERE id = ? AND teamId = ?`, [id, teamId])
+    : db.get(`SELECT * FROM combos WHERE id = ?`, [id]);
   return rowToCombo(row);
 }
 
-export async function getComboByName(name) {
+export async function getComboByName(name, teamId) {
   const db = await getAdapter();
-  const row = db.get(`SELECT * FROM combos WHERE name = ?`, [name]);
+  const row = teamId !== undefined
+    ? db.get(`SELECT * FROM combos WHERE name = ? AND teamId = ?`, [name, teamId])
+    : db.get(`SELECT * FROM combos WHERE name = ?`, [name]);
   return rowToCombo(row);
 }
 
@@ -37,6 +44,7 @@ export async function createCombo(data) {
   const now = new Date().toISOString();
   const combo = {
     id: uuidv4(),
+    teamId: data.teamId ?? null,
     name: data.name,
     kind: data.kind || null,
     models: data.models || [],
@@ -44,8 +52,8 @@ export async function createCombo(data) {
     updatedAt: now,
   };
   db.run(
-    `INSERT INTO combos(id, name, kind, models, createdAt, updatedAt) VALUES(?, ?, ?, ?, ?, ?)`,
-    [combo.id, combo.name, combo.kind, stringifyJson(combo.models), combo.createdAt, combo.updatedAt]
+    `INSERT INTO combos(id, teamId, name, kind, models, createdAt, updatedAt) VALUES(?, ?, ?, ?, ?, ?, ?)`,
+    [combo.id, combo.teamId, combo.name, combo.kind, stringifyJson(combo.models), combo.createdAt, combo.updatedAt]
   );
   return combo;
 }

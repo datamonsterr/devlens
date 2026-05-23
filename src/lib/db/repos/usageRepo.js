@@ -255,12 +255,13 @@ export async function saveRequestUsage(entry) {
     // better-sqlite3 is sync → no JS yield mid-transaction → no race in same process.
     db.transaction(() => {
       db.run(
-        `INSERT INTO usageHistory(timestamp, provider, model, connectionId, apiKey, endpoint, promptTokens, completionTokens, cost, status, tokens, meta) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO usageHistory(timestamp, teamId, userId, provider, model, connectionId, apiKey, endpoint, promptTokens, completionTokens, rtkTokensSaved, cost, status, tokens, meta) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          entry.timestamp, entry.provider || null, entry.model || null,
+          entry.timestamp, entry.teamId || null, entry.userId || null,
+          entry.provider || null, entry.model || null,
           entry.connectionId || null, entry.apiKey || null, entry.endpoint || null,
-          promptTokens, completionTokens, entry.cost || 0, entry.status || "ok",
-          stringifyJson(tokens), stringifyJson({}),
+          promptTokens, completionTokens, entry.rtkTokensSaved || 0, entry.cost || 0, entry.status || "ok",
+          stringifyJson(tokens), stringifyJson(entry.meta || {}),
         ]
       );
 
@@ -291,16 +292,18 @@ export async function getUsageHistory(filter = {}) {
   const conds = [];
   const params = [];
 
+  if (filter.teamId) { conds.push("teamId = ?"); params.push(filter.teamId); }
+  if (filter.userId) { conds.push("userId = ?"); params.push(filter.userId); }
   if (filter.provider) { conds.push("provider = ?"); params.push(filter.provider); }
   if (filter.model) { conds.push("model = ?"); params.push(filter.model); }
   if (filter.startDate) { conds.push("timestamp >= ?"); params.push(new Date(filter.startDate).toISOString()); }
   if (filter.endDate) { conds.push("timestamp <= ?"); params.push(new Date(filter.endDate).toISOString()); }
 
   const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
-  const rows = db.all(`SELECT timestamp, provider, model, connectionId, apiKey, endpoint, cost, status, tokens FROM usageHistory ${where} ORDER BY id ASC`, params);
+  const rows = db.all(`SELECT timestamp, teamId, userId, provider, model, connectionId, apiKey, endpoint, cost, status, tokens FROM usageHistory ${where} ORDER BY id ASC`, params);
 
   return rows.map((r) => ({
-    timestamp: r.timestamp, provider: r.provider, model: r.model,
+    timestamp: r.timestamp, teamId: r.teamId, userId: r.userId, provider: r.provider, model: r.model,
     connectionId: r.connectionId, apiKey: r.apiKey, endpoint: r.endpoint,
     cost: r.cost, status: r.status, tokens: parseJson(r.tokens, {}),
   }));

@@ -2,8 +2,10 @@ import { getAdapter } from "@/lib/db/driver";
 import { auth } from "@clerk/nextjs/server";
 
 export async function getTeamContext() {
-  const { userId, orgId } = await auth();
+  const { userId, orgId, sessionClaims } = await auth();
   if (!userId || !orgId) return null;
+  const memberships = sessionClaims?.orgs || sessionClaims?.organizations || null;
+  if (Array.isArray(memberships) && memberships.length !== 1) return null;
 
   const adapter = await getAdapter();
   const team = adapter.get(
@@ -34,4 +36,18 @@ export async function requireTeamContext() {
   if (!ctx) throw new Response(JSON.stringify({ error: "Team context not found" }), { status: 403 });
   if (!ctx.isActive) throw new Response(JSON.stringify({ error: "Account inactive" }), { status: 403 });
   return ctx;
+}
+
+export async function requireTeamRole(allowedRoles) {
+  const ctx = await requireTeamContext();
+  const allowed = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+  const hierarchy = { manager: 2, developer: 1 };
+  if (!ctx.role || !allowed.some((role) => ctx.role === role || hierarchy[ctx.role] >= hierarchy[role])) {
+    throw new Response(JSON.stringify({ error: "Insufficient permissions" }), { status: 403 });
+  }
+  return ctx;
+}
+
+export async function requireManagerContext() {
+  return requireTeamRole("manager");
 }

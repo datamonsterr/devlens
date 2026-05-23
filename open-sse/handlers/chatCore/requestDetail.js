@@ -72,7 +72,7 @@ export function buildRequestDetail(base, overrides = {}) {
   };
 }
 
-export function saveUsageStats({ provider, model, tokens, connectionId, apiKey, endpoint, label = "USAGE" }) {
+export function saveUsageStats({ provider, model, tokens, connectionId, apiKey, authContext, rtkTokensSaved = 0, endpoint, label = "USAGE" }) {
   if (!tokens || typeof tokens !== "object") return;
 
   const inTokens = tokens.input_tokens ?? tokens.prompt_tokens ?? 0;
@@ -95,8 +95,11 @@ export function saveUsageStats({ provider, model, tokens, connectionId, apiKey, 
     model: model || "unknown",
     tokens: normalized,
     timestamp: new Date().toISOString(),
+    teamId: authContext?.teamId || undefined,
+    userId: authContext?.userId || undefined,
     connectionId: connectionId || undefined,
     apiKey: apiKey || undefined,
+    rtkTokensSaved,
     endpoint: endpoint || null
   }).catch(() => {});
 }

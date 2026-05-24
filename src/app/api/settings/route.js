@@ -35,7 +35,6 @@ export async function PATCH(request) {
     await assertManager();
     const body = await request.json();
 
-    // If updating password, hash it (legacy support removed — Clerk handles auth)
     if (body.newPassword) {
       delete body.newPassword;
       delete body.currentPassword;
@@ -49,7 +48,6 @@ export async function PATCH(request) {
 
     const settings = await updateSettings(body);
 
-    // Apply outbound proxy settings immediately (no restart required)
     if (
       Object.prototype.hasOwnProperty.call(body, "outboundProxyEnabled") ||
       Object.prototype.hasOwnProperty.call(body, "outboundProxyUrl") ||
@@ -58,7 +56,6 @@ export async function PATCH(request) {
       applyOutboundProxyEnv(settings);
     }
 
-    // Invalidate combo rotation state when strategy settings change
     if (
       Object.prototype.hasOwnProperty.call(body, "comboStrategy") ||
       Object.prototype.hasOwnProperty.call(body, "comboStickyRoundRobinLimit") ||
@@ -71,6 +68,7 @@ export async function PATCH(request) {
     safeSettings.oidcConfigured = !!(safeSettings.oidcIssuerUrl && safeSettings.oidcClientId && oidcClientSecret);
     return NextResponse.json(safeSettings, { headers: SETTINGS_RESPONSE_HEADERS });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error updating settings:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

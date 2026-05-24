@@ -61,6 +61,7 @@ export async function GET() {
 
     return NextResponse.json({ connections: safeConnections });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error fetching providers:", error);
     return NextResponse.json({ error: "Failed to fetch providers" }, { status: 500 });
   }
@@ -160,6 +161,7 @@ export async function POST(request) {
 
     return NextResponse.json({ connection: result }, { status: 201 });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error creating provider:", error);
     return NextResponse.json({ error: "Failed to create provider" }, { status: 500 });
   }

@@ -19,9 +19,15 @@ export async function GET() {
       return NextResponse.json({ error: "Team not found" }, { status: 404 });
     }
 
+    const history = await adapter.all(
+      `SELECT action, amount, remainingAfter, timestamp FROM rtkPoolHistory WHERE teamId = ? ORDER BY timestamp DESC, id DESC LIMIT 50`,
+      [ctx.teamId]
+    );
+
     return NextResponse.json({
       rtkPool: team.rtkPool,
       active: team.rtkPool > 0,
+      history,
     });
   } catch (error) {
     if (error instanceof Response) return error;
@@ -37,8 +43,14 @@ export async function PUT(request) {
     const body = await request.json();
     const { amount, mode } = body;
 
-    if (typeof amount !== "number" || isNaN(amount)) {
-      return NextResponse.json({ error: "amount must be a number" }, { status: 400 });
+    if (typeof amount !== "number" || !Number.isFinite(amount) || !Number.isInteger(amount)) {
+      return NextResponse.json({ error: "amount must be an integer" }, { status: 400 });
+    }
+    if (amount < 0) {
+      return NextResponse.json({ error: "amount must be non-negative" }, { status: 400 });
+    }
+    if (mode && mode !== "topup" && mode !== "reset") {
+      return NextResponse.json({ error: "mode must be topup or reset" }, { status: 400 });
     }
 
     const adapter = await getAdapter();
@@ -54,8 +66,8 @@ export async function PUT(request) {
         newPool = Math.max(0, amount);
         action = "reset";
       } else {
-        newPool = Math.max(0, team.rtkPool + amount);
-        action = amount >= 0 ? "allocate" : "consume";
+        newPool = team.rtkPool + amount;
+        action = "allocate";
       }
 
       await adapter.run(`UPDATE teams SET rtkPool = ?, updatedAt = ? WHERE id = ?`, [

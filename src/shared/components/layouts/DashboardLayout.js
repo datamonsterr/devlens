@@ -1,10 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useNotificationStore } from "@/store/notificationStore";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
+
+function isDashboardApi(input) {
+  const url = typeof input === "string" ? input : input?.url;
+  return typeof url === "string" && (url.startsWith("/api/") || url.startsWith("/v1/"));
+}
+
+function getRequestMethod(input, init) {
+  return (init?.method || (typeof input !== "string" ? input?.method : "") || "GET").toUpperCase();
+}
+
+function getToastMessage(data, fallback) {
+  if (data?.message) return data.message;
+  if (data?.error) return data.error;
+  return fallback;
+}
+
+function installApiFeedback() {
+  if (globalThis.__devlensApiFeedbackInstalled) return;
+  globalThis.__devlensApiFeedbackInstalled = true;
+  const nativeFetch = globalThis.fetch.bind(globalThis);
+
+  globalThis.fetch = async (input, init) => {
+    const shouldTrack = isDashboardApi(input);
+    const method = getRequestMethod(input, init);
+    const store = useNotificationStore.getState();
+
+    if (shouldTrack) store.beginApiRequest();
+
+    try {
+      const response = await nativeFetch(input, init);
+      if (shouldTrack) {
+        const notify = useNotificationStore.getState();
+        if (!response.ok) {
+          let data = null;
+          try {
+            data = await response.clone().json();
+          } catch {}
+          notify.error(getToastMessage(data, `API request failed (${response.status})`), "API Error");
+        } else if (method !== "GET" && method !== "HEAD") {
+          let data = null;
+          try {
+            data = await response.clone().json();
+          } catch {}
+          notify.success(getToastMessage(data, "API request completed"), "API Success");
+        }
+      }
+      return response;
+    } catch (error) {
+      if (shouldTrack) {
+        useNotificationStore.getState().error(error.message || "API request failed", "API Error");
+      }
+      throw error;
+    } finally {
+      if (shouldTrack) useNotificationStore.getState().endApiRequest();
+    }
+  };
+}
 
 function getToastStyle(type) {
   if (type === "success") {
@@ -34,11 +91,22 @@ function getToastStyle(type) {
 export default function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => {
+    installApiFeedback();
+  }, []);
   const notifications = useNotificationStore((state) => state.notifications);
+  const pendingApiCount = useNotificationStore((state) => state.pendingApiCount);
   const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-bg text-text-main">
+      {pendingApiCount > 0 && (
+        <div className="fixed right-4 bottom-4 z-[80] inline-flex items-center gap-2 rounded-full border border-blue-500/25 bg-surface/90 px-3 py-2 text-xs font-medium text-blue-600 shadow-lg backdrop-blur-xl dark:text-blue-300">
+          <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+          API loading{pendingApiCount > 1 ? ` (${pendingApiCount})` : ""}
+        </div>
+      )}
       <div className="fixed top-4 right-4 z-[80] flex w-[min(92vw,380px)] flex-col gap-2">
         {notifications.map((n) => {
           const style = getToastStyle(n.type);

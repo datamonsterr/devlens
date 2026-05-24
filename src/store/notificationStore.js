@@ -9,6 +9,11 @@ let idCounter = 0;
 
 export const useNotificationStore = create((set, get) => ({
   notifications: [],
+  pendingApiCount: 0,
+
+  beginApiRequest: () => set((s) => ({ pendingApiCount: s.pendingApiCount + 1 })),
+
+  endApiRequest: () => set((s) => ({ pendingApiCount: Math.max(s.pendingApiCount - 1, 0) })),
 
   addNotification: (notification) => {
     const id = ++idCounter;

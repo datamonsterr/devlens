@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
+import Link from "next/link";
 import { LOCALE_COOKIE, normalizeLocale } from "@/i18n/config";
 import { useTheme } from "@/shared/hooks/useTheme";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -20,26 +21,39 @@ function getLocaleFromCookie() {
   return normalizeLocale(value);
 }
 
-function MenuItem({ icon, label, onClick, trailing, danger }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
-        danger
-          ? "text-red-500 hover:bg-red-500/10"
-          : "text-text-main hover:bg-black/5 dark:hover:bg-white/5"
-      }`}
-    >
+function MenuItem({ href, icon, label, onClick, trailing, danger }) {
+  const className = `flex items-center gap-3 w-full px-4 py-2.5 text-sm transition-colors ${
+    danger
+      ? "text-red-500 hover:bg-red-500/10"
+      : "text-text-main hover:bg-black/5 dark:hover:bg-white/5"
+  }`;
+  const content = (
+    <>
       <span className={`material-symbols-outlined text-[20px] ${danger ? "" : "text-text-muted"}`}>
         {icon}
       </span>
       <span className="flex-1 text-left">{label}</span>
       {trailing && <span className="text-base">{trailing}</span>}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} onClick={onClick} className={className}>
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button onClick={onClick} className={className}>
+      {content}
     </button>
   );
 }
 
 MenuItem.propTypes = {
+  href: PropTypes.string,
   icon: PropTypes.string.isRequired,
   label: PropTypes.string.isRequired,
   onClick: PropTypes.func.isRequired,
@@ -85,6 +99,19 @@ export default function HeaderMenu({ onLogout }) {
 
         {isOpen && (
           <div className="absolute right-0 top-full mt-2 w-60 bg-surface border border-black/10 dark:border-white/10 rounded-xl shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-150 overflow-hidden py-1">
+            <MenuItem
+              href="/dashboard/profile"
+              icon="person"
+              label="Profile"
+              onClick={close}
+            />
+            <MenuItem
+              href="/dashboard/profile"
+              icon="settings"
+              label="Settings"
+              onClick={close}
+            />
+            <div className="my-1 border-t border-border-subtle" />
             <MenuItem
               icon="language"
               label={LOCALE_INFO[locale]?.name || locale}

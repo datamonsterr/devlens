@@ -39,7 +39,6 @@ const managerSections = [
       { href: "/dashboard/endpoint", label: "API Quickstart", icon: "play_circle" },
       { href: "/dashboard/cli-tools", label: "CLI Config", icon: "code_blocks" },
       { href: "/dashboard/console-log", label: "Console Log", icon: "receipt_long" },
-      { href: "/dashboard/profile", label: "Settings", icon: "tune" },
     ],
   },
 ];
@@ -63,7 +62,6 @@ const developerSections = [
       { href: "/dashboard/endpoint", label: "API Quickstart", icon: "bolt" },
       { href: "/dashboard/cli-tools", label: "CLI Config", icon: "terminal" },
       { href: "/dashboard/console-log", label: "Console Log", icon: "subject" },
-      { href: "/dashboard/profile", label: "Account", icon: "manage_accounts" },
     ],
   },
 ];
@@ -106,13 +104,9 @@ NavLink.propTypes = {
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
   const { isManager, isDeveloper, isLoaded } = useRole();
-  const [showStopModal, setShowStopModal] = useState(false);
-  const [isShuttingDown, setIsShuttingDown] = useState(false);
-  const [isDisconnected, setIsDisconnected] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [shutdownCountdown, setStopCountdown] = useState(0);
   const { copied, copy } = useCopyToClipboard(2000);
 
   const INSTALL_CMD = UPDATER_CONFIG.installCmdLatest;
@@ -141,43 +135,16 @@ export default function Sidebar({ onClose }) {
     setIsUpdating(true);
   };
 
-  const handleCopyAndStop = async () => {
+  const handleCopyInstallCommand = async () => {
     try {
       await navigator.clipboard.writeText(INSTALL_CMD);
-    } catch {
-      // clipboard access may fail in restricted browsers
-    }
+    } catch {}
 
     copy(INSTALL_CMD);
-    let remaining = UPDATER_CONFIG.shutdownCountdownSec;
-    setStopCountdown(remaining);
-
-    const timer = setInterval(() => {
-      remaining -= 1;
-      setStopCountdown(remaining);
-      if (remaining <= 0) {
-        clearInterval(timer);
-        fetch("/api/version/shutdown", { method: "POST" }).catch(() => {});
-        setIsDisconnected(true);
-      }
-    }, 1000);
   };
 
-  const handleCancelUpdate = () => {
+  const handleCloseUpdate = () => {
     setIsUpdating(false);
-    setStopCountdown(0);
-  };
-
-  const handleStop = async () => {
-    setIsShuttingDown(true);
-    try {
-      await fetch("/api/version/shutdown", { method: "POST" });
-    } catch {
-      // expected to fail during shutdown
-    }
-    setIsShuttingDown(false);
-    setShowStopModal(false);
-    setIsDisconnected(true);
   };
 
   const visibleSections = isManager
@@ -258,68 +225,28 @@ export default function Sidebar({ onClose }) {
             ))}
         </nav>
 
-        {isManager && (
-          <div className="border-t border-border-subtle/70 p-3">
-            <Button
-              variant="outline"
-              fullWidth
-              icon="power_settings_new"
-              onClick={() => setShowStopModal(true)}
-              className="border-red-200/80 text-red-500 hover:border-red-300 hover:bg-red-500/10"
-            >
-              Stop
-            </Button>
-          </div>
-        )}
       </aside>
-
-      <ConfirmModal
-        isOpen={showStopModal}
-        onClose={() => setShowStopModal(false)}
-        onConfirm={handleStop}
-        title="Close Proxy"
-        message="Are you sure you want to close the proxy server?"
-        confirmText="Close"
-        cancelText="Cancel"
-        variant="danger"
-        loading={isShuttingDown}
-      />
 
       <ConfirmModal
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
         onConfirm={handleUpdate}
         title="Update Devlens"
-        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it and shutdown to install manually.`}
+        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it to install manually.`}
         confirmText="Show Command"
         cancelText="Cancel"
         variant="primary"
       />
 
-      {(isDisconnected || isUpdating) && (
+      {isUpdating && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
-          {isUpdating ? (
-            <ManualUpdatePanel
-              latestVersion={updateInfo?.latestVersion}
-              installCmd={INSTALL_CMD}
-              copied={copied}
-              onCopyAndStop={handleCopyAndStop}
-              onCancel={handleCancelUpdate}
-              countdown={shutdownCountdown}
-              isDisconnected={isDisconnected}
-            />
-          ) : (
-            <div className="p-8 text-center">
-              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-red-500/20 text-red-500">
-                <span className="material-symbols-outlined text-[32px]">power_off</span>
-              </div>
-              <h2 className="mb-2 text-xl font-semibold text-white">Server Disconnected</h2>
-              <p className="mb-6 text-text-muted">The proxy server has been stopped.</p>
-              <Button variant="secondary" onClick={() => globalThis.location.reload()}>
-                Reload Page
-              </Button>
-            </div>
-          )}
+          <ManualUpdatePanel
+            latestVersion={updateInfo?.latestVersion}
+            installCmd={INSTALL_CMD}
+            copied={copied}
+            onCopy={handleCopyInstallCommand}
+            onClose={handleCloseUpdate}
+          />
         </div>
       )}
     </>
@@ -334,13 +261,9 @@ function ManualUpdatePanel({
   latestVersion,
   installCmd,
   copied,
-  onCopyAndStop,
-  onCancel,
-  countdown,
-  isDisconnected,
+  onCopy,
+  onClose,
 }) {
-  const isCountingDown = countdown > 0;
-
   return (
     <div className="w-full max-w-lg rounded-xl border border-white/10 bg-neutral-900/95 p-6 text-white">
       <div className="mb-4 flex items-center gap-3">
@@ -352,11 +275,7 @@ function ManualUpdatePanel({
             Update Devlens{latestVersion ? ` to v${latestVersion}` : ""}
           </h2>
           <p className="text-xs text-white/60">
-            {isDisconnected
-              ? "Server stopped. Paste the command into a terminal to install."
-              : isCountingDown
-                ? `Command copied. Server will stop in ${countdown}s...`
-                : "Click the button below to copy the install command and shutdown."}
+            Copy the install command and run it from a terminal when ready.
           </p>
         </div>
       </div>
@@ -367,33 +286,21 @@ function ManualUpdatePanel({
       </div>
 
       <ol className="mb-4 list-inside list-decimal space-y-1 text-xs text-white/70">
-        <li>
-          Click <strong>Copy & Stop</strong> below.
-        </li>
+        <li>Copy the install command below.</li>
         <li>Paste the command into your terminal and press Enter.</li>
         <li>
           Run <code className="rounded bg-white/10 px-1 text-green-400">devlens</code> again after install.
         </li>
       </ol>
 
-      {isDisconnected ? (
-        <Button variant="secondary" fullWidth onClick={() => globalThis.location.reload()}>
-          Reload Page
+      <div className="flex gap-2">
+        <Button variant="secondary" onClick={onClose}>
+          Close
         </Button>
-      ) : (
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={onCancel} disabled={isCountingDown}>
-            Cancel
-          </Button>
-          <Button variant="primary" fullWidth onClick={onCopyAndStop} disabled={isCountingDown}>
-            {copied
-              ? "Copied - shutting down..."
-              : isCountingDown
-                ? `Shutting down in ${countdown}s`
-                : "Copy & Stop"}
-          </Button>
-        </div>
-      )}
+        <Button variant="primary" fullWidth onClick={onCopy}>
+          {copied ? "Copied" : "Copy Command"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -402,8 +309,6 @@ ManualUpdatePanel.propTypes = {
   latestVersion: PropTypes.string,
   installCmd: PropTypes.string.isRequired,
   copied: PropTypes.bool,
-  onCopyAndStop: PropTypes.func.isRequired,
-  onCancel: PropTypes.func.isRequired,
-  countdown: PropTypes.number,
-  isDisconnected: PropTypes.bool,
+  onCopy: PropTypes.func.isRequired,
+  onClose: PropTypes.func.isRequired,
 };

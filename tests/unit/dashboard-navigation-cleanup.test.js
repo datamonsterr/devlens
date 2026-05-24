@@ -13,13 +13,18 @@ describe("dashboard navigation cleanup", () => {
   it("keeps legacy top-right actions out of HeaderMenu", () => {
     const source = readRepoFile("src/shared/components/HeaderMenu.js");
 
-    expect(source).not.toMatch(/Donate|Changelog|Change Log|Shutdown|Remote/);
+    expect(source).not.toMatch(/Donate|Changelog|Change Log|Shutdown|Remote|Stop/);
+    expect(source).toContain('label="Profile"');
+    expect(source).toContain('label="Settings"');
+    expect(source).toContain('label="Logout"');
   });
 
   it("keeps obsolete dashboard navigation actions hidden", () => {
     const source = readRepoFile("src/shared/components/Sidebar.js");
 
-    expect(source).not.toMatch(/Donate|Changelog|Change Log|Shutdown|Remote|Tailscale|Proxy Pool|Device Sync|Cloud Sync/);
+    expect(source).not.toMatch(/Donate|Changelog|Change Log|Shutdown|Remote|Stop|Tailscale|Proxy Pool|Device Sync|Cloud Sync/);
+    expect(source).not.toMatch(/label:\s*["']Settings["']/);
+    expect(source).not.toMatch(/label:\s*["']Account["']/);
     expect(source).toContain("/dashboard/endpoint");
     expect(source).toContain("/dashboard/keys");
     expect(source).toContain("/dashboard/console-log");

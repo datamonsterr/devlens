@@ -164,11 +164,13 @@ export async function createProviderConnection(data) {
 }
 
 // Critical: OAuth refresh token race — atomic merge inside transaction
-export async function updateProviderConnection(id, data) {
+export async function updateProviderConnection(id, data, teamId) {
   const db = await getAdapter();
   let result;
   await db.transaction(async () => {
-    const row = await db.get(`SELECT * FROM providerConnections WHERE id = ?`, [id]);
+    const row = teamId != null
+      ? await db.get(`SELECT * FROM providerConnections WHERE id = ? AND teamId = ?`, [id, teamId])
+      : await db.get(`SELECT * FROM providerConnections WHERE id = ?`, [id]);
     if (!row) { result = null; return; }
     const existing = rowToConn(row);
     const merged = { ...existing, ...data, updatedAt: new Date().toISOString() };
@@ -179,11 +181,13 @@ export async function updateProviderConnection(id, data) {
   return result;
 }
 
-export async function deleteProviderConnection(id) {
+export async function deleteProviderConnection(id, teamId) {
   const db = await getAdapter();
   let ok = false;
   await db.transaction(async () => {
-    const row = await db.get(`SELECT provider, teamId FROM providerConnections WHERE id = ?`, [id]);
+    const row = teamId != null
+      ? await db.get(`SELECT provider, teamId FROM providerConnections WHERE id = ? AND teamId = ?`, [id, teamId])
+      : await db.get(`SELECT provider, teamId FROM providerConnections WHERE id = ?`, [id]);
     if (!row) return;
     await db.run(`DELETE FROM providerConnections WHERE id = ?`, [id]);
     await reorderInTx(db, row.provider, row.teamId);

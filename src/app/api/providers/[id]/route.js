@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import {
   getProviderConnectionById,
   updateProviderConnection,
@@ -40,8 +40,9 @@ function shouldMergeProviderSpecificData(existing, incoming, hasLegacyProxy) {
 // GET /api/providers/[id] - Get single connection
 export async function GET(request, { params }) {
   try {
+    const ctx = await requireTeamContext();
     const { id } = await params;
-    const connection = await getProviderConnectionById(id);
+    const connection = await getProviderConnectionById(id, ctx.teamId);
 
     if (!connection) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
@@ -56,6 +57,7 @@ export async function GET(request, { params }) {
 
     return NextResponse.json({ connection: result });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error fetching connection:", error);
     return NextResponse.json({ error: "Failed to fetch connection" }, { status: 500 });
   }
@@ -64,7 +66,7 @@ export async function GET(request, { params }) {
 // PUT /api/providers/[id] - Update connection
 export async function PUT(request, { params }) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const { id } = await params;
     const body = await request.json();
     const {
@@ -80,7 +82,7 @@ export async function PUT(request, { params }) {
       providerSpecificData
     } = body;
 
-    const existing = await getProviderConnectionById(id);
+    const existing = await getProviderConnectionById(id, ctx.teamId);
     if (!existing) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
@@ -121,7 +123,7 @@ export async function PUT(request, { params }) {
 
     }
 
-    const updated = await updateProviderConnection(id, updateData);
+    const updated = await updateProviderConnection(id, updateData, ctx.teamId);
 
     // Hide sensitive fields
     const result = { ...updated };
@@ -132,6 +134,7 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json({ connection: result });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error updating connection:", error);
     return NextResponse.json({ error: "Failed to update connection" }, { status: 500 });
   }
@@ -140,16 +143,17 @@ export async function PUT(request, { params }) {
 // DELETE /api/providers/[id] - Delete connection
 export async function DELETE(request, { params }) {
   try {
-    await assertManager();
+    const ctx = await requireManagerContext();
     const { id } = await params;
 
-    const deleted = await deleteProviderConnection(id);
+    const deleted = await deleteProviderConnection(id, ctx.teamId);
     if (!deleted) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
 
     return NextResponse.json({ message: "Connection deleted successfully" });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error deleting connection:", error);
     return NextResponse.json({ error: "Failed to delete connection" }, { status: 500 });
   }

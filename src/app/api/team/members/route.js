@@ -88,11 +88,9 @@ export async function DELETE(request) {
     const adapter = await getAdapter();
     const now = new Date().toISOString();
 
-    // Mark user inactive
     await adapter.run(`UPDATE users SET isActive = 0, updatedAt = ? WHERE id = ? AND teamId = ?`, [now, userId, ctx.teamId]);
 
-    // Revoke all API keys
-    await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE userId = ?`, [userId]);
+    await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE userId = ? AND teamId = ?`, [userId, ctx.teamId]);
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

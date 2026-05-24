@@ -8,6 +8,7 @@
 - Tailscale tunnel provider.
 - Proxy Pools.
 - CLI auto-config writers/checkers.
+- Legacy Donate, Changelog, Remote, and Shutdown UI actions.
 - i18n docs not used by Devlens.
 - Dead shim modules and backup files.
 

@@ -31,6 +31,7 @@ Source of truth for Devlens feature specs. OpenSpec wins when code and docs disa
 - Tailscale tunnel provider
 - Proxy Pools
 - CLI auto-config writers
+- Legacy Donate, Changelog, Remote, and Shutdown UI actions
 - Non-English/Vietnamese docs
 - Dead shim modules and unused backup files
 

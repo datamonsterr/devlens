@@ -11,6 +11,7 @@
 
 - `/dashboard`: role-aware home.
 - `/dashboard/team`: Manager Team management, Developer invite status, assigned API Key metadata/copy controls.
+- `/teams`: legacy Team management alias redirecting to `/dashboard/team`.
 - `/dashboard/providers`: Manager Provider Connections.
 - `/dashboard/combos`: Manager Combos.
 - `/dashboard/pricing`: Manager Pricing Overrides.

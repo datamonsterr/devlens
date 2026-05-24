@@ -13,7 +13,7 @@ describe("role dashboard UI wiring", () => {
     const sidebar = read("src/shared/components/Sidebar.js");
     expect(sidebar).toContain("/dashboard/team");
     expect(sidebar).toContain("/dashboard/usage");
-    expect(sidebar).toContain("/dashboard/cli-tools");
+    expect(sidebar).toContain("CLI Config");
     expect(sidebar).toContain("/dashboard/console-log");
   });
 

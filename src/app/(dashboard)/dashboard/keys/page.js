@@ -9,6 +9,14 @@ export default function KeysPage() {
   const { isManager, isDeveloper } = useRole();
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (isManager) {
+      setRedirecting(true);
+      window.location.replace("/dashboard/team");
+    }
+  }, [isManager]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [keyName, setKeyName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -93,7 +101,18 @@ export default function KeysPage() {
     return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" });
   };
 
-  if (loading) {
+  if (loading || redirecting) {
+    if (redirecting) {
+      return (
+        <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-48 bg-surface-2 rounded" />
+            <div className="h-24 bg-surface-2 rounded-xl" />
+          </div>
+          <p className="text-sm text-text-muted">Redirecting to Team management...</p>
+        </div>
+      );
+    }
     return (
       <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
         <div className="animate-pulse space-y-4">

@@ -150,7 +150,7 @@ export default function Sidebar({ onClose }) {
 
         {/* Navigation */}
         <nav className="flex-1 px-4 py-2 space-y-0.5 overflow-y-auto custom-scrollbar">
-          {isManager && managerSharedItems.map((item) => (
+          {isManager && managerSharedItems.filter((i) => i.label !== "API Keys").map((item) => (
             <Link
               key={item.href}
               href={item.href}

@@ -73,11 +73,28 @@ export async function POST(req) {
         case "organizationMembership.created": {
           const orgId = data.organization.id;
           const clerkUserId = data.public_user_data.user_id;
+          const email = data.public_user_data?.identifier || null;
 
           const team = await adapter.get(`SELECT id FROM teams WHERE clerkOrgId = ?`, [orgId]);
           if (!team) break;
 
           const role = data.role === "org:admin" ? "manager" : "developer";
+
+          if (email) {
+            const pending = await adapter.get(
+              `SELECT id FROM users WHERE teamId = ? AND email = ? AND clerkUserId LIKE 'invite:%'`,
+              [team.id, email]
+            );
+            if (pending) {
+              const now = new Date().toISOString();
+              await adapter.run(
+                `UPDATE users SET clerkUserId = ?, inviteStatus = 'accepted', updatedAt = ? WHERE id = ?`,
+                [clerkUserId, now, pending.id]
+              );
+              break;
+            }
+          }
+
           await ensureUser(adapter, clerkUserId, team.id, role);
           break;
         }

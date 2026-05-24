@@ -15,6 +15,8 @@ Authenticate Managers and Developers through Clerk sessions and Clerk Organizati
 - Signed-in Clerk Organization session self-heals missing Clerk Organization→Team and Clerk user→local user rows when webhook creation was missed.
 - Manager sign-up creates Team.
 - Developer joins existing Team by Manager invitation.
+- Manager invitation creates a usable Clerk Organization invitation scoped to the Team.
+- Invitation APIs must fail visibly when Clerk invitation creation fails.
 - Dashboard and management APIs require Clerk session.
 - `/v1/*` uses API Key auth, not Clerk session.
 - Vercel production uses Clerk environment variables from the Vercel integrated Clerk setup.

@@ -1,5 +1,5 @@
 // Latest schema version — bumped when a migration is added in ./migrations/
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const PRAGMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -151,8 +151,12 @@ export const TABLES = {
     columns: {
       id: "TEXT PRIMARY KEY",
       clerkUserId: "TEXT UNIQUE NOT NULL",
+      email: "TEXT",
       teamId: "TEXT REFERENCES teams(id)",
       role: "TEXT NOT NULL CHECK(role IN ('manager', 'developer'))",
+      inviteStatus: "TEXT",
+      inviteId: "TEXT",
+      onboardingEmailStatus: "TEXT",
       isActive: "INTEGER DEFAULT 1",
       createdAt: "TEXT NOT NULL",
       updatedAt: "TEXT NOT NULL",

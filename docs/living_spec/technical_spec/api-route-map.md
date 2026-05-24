@@ -25,6 +25,12 @@
 ## Management API
 
 - `/api/team`: server-resolved Team context for signed-in Clerk Organization session.
+- `/api/tunnel/status`: signed-in Team context can read cloudflared tunnel status.
+- `/api/tunnel/enable`: Manager refreshes/enables cloudflared tunnel URL.
+
+## Public status API
+
+- `/status`: unauthenticated CORS health check returning `{ ok: true }`.
 
 ## Compatibility API
 

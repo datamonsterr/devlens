@@ -36,7 +36,8 @@ Vercel cold starts can happen concurrently against one Turso database, so Turso 
 - one runner applies pending migrations and refreshes its lock lease while running;
 - concurrent runners wait for the lock and then re-check schema version through the normal migration path;
 - abandoned locks expire so later starts can proceed;
-- lock wait timeout fails safely before serving DB-dependent requests and remains retryable in-process;
+- lock wait timeout normally fails safely before serving DB-dependent requests and remains retryable in-process;
+- if startup hits a Turso migration-lock timeout, app may continue against existing schema while logging `[DB][migrate] Turso migration lock busy; using existing schema`;
 - migration version update is guarded with migration step execution where libSQL supports it.
 
 Unsupported SQLite pragmas must be ignored or handled in Turso mode without failing schema initialization.

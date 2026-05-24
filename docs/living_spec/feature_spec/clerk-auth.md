@@ -24,6 +24,8 @@ Authenticate Managers and Developers through Clerk sessions and Clerk Organizati
 - Vercel production uses Clerk environment variables from the Vercel integrated Clerk setup.
 - Local development uses Clerk environment variables from local `.env` or `.env.local` files.
 - Sign-in, sign-up, and signed-in user controls must be visible from onboarding or navigation.
+- HeaderMenu/account menu exposes Profile, Settings (`/dashboard/profile`), and Logout for signed-in Managers and Developers.
+- Sidebar does not show Stop or standalone Settings/Account modules.
 
 ## 9router change
 

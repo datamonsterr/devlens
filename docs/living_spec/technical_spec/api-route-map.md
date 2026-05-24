@@ -21,6 +21,7 @@
 - `/dashboard/cli-config`: CLI Config Snippets (aliased to `/dashboard/cli-tools` with redirect).
 - `/dashboard/console-log`: role-filtered sanitized logs.
 - `/dashboard/endpoint`: Team cloudflared endpoint.
+- `/dashboard/profile`: profile/settings surface opened from HeaderMenu/account menu, not standalone sidebar module.
 
 ## Management API
 

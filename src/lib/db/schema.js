@@ -47,17 +47,6 @@ export const TABLES = {
       "CREATE INDEX IF NOT EXISTS idx_pc_priority ON providerConnections(provider, priority)",
     ],
   },
-  proxyPools: {
-    columns: {
-      id: "TEXT PRIMARY KEY",
-      name: "TEXT NOT NULL",
-      proxyUrl: "TEXT NOT NULL",
-      isActive: "INTEGER DEFAULT 1",
-      createdAt: "TEXT NOT NULL",
-      updatedAt: "TEXT NOT NULL",
-    },
-    indexes: ["CREATE INDEX IF NOT EXISTS idx_proxy_pools_updated ON proxyPools(updatedAt DESC)"],
-  },
   providerNodes: {
     columns: {
       id: "TEXT PRIMARY KEY",

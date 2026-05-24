@@ -15,11 +15,6 @@ export {
   reorderProviderConnections, cleanupProviderConnections,
 } from "./repos/connectionsRepo.js";
 
-// Proxy pools
-export {
-  getProxyPools, createProxyPool, updateProxyPool, deleteProxyPool,
-} from "./repos/proxyPoolsRepo.js";
-
 // Provider nodes
 export {
   getProviderNodes, getProviderNodeById,

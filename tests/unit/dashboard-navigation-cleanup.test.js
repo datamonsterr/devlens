@@ -21,7 +21,7 @@ describe("dashboard navigation cleanup", () => {
 
     expect(source).not.toMatch(/Donate|Changelog|Change Log|Shutdown|Remote|Tailscale|Proxy Pool|Device Sync|Cloud Sync/);
     expect(source).toContain("/dashboard/endpoint");
-    expect(source).toContain("/dashboard/cli-tools");
+    expect(source).toContain("/dashboard/keys");
     expect(source).toContain("/dashboard/console-log");
   });
 

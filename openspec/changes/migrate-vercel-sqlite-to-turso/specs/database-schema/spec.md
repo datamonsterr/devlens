@@ -11,7 +11,6 @@ The system SHALL run versioned schema migrations and additive schema sync agains
 #### Scenario: Turso schema migration
 - **WHEN** the application starts with Turso configured and the schema is outdated
 - **THEN** one migration runner applies pending migrations while concurrent startup attempts wait, skip, or fail safely without corrupting migration state
-- **CURRENT IMPLEMENTATION GAP** `src/lib/db/migrate.js` does not yet implement a Turso-backed migration lock or equivalent coordination
 
 #### Scenario: Unsupported Turso pragmas
 - **WHEN** migration code encounters SQLite pragmas unsupported by Turso/libSQL

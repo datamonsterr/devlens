@@ -13,7 +13,7 @@ Devlens is a Team-scoped B2B dashboard, but some UI surfaces still reflect local
 **Non-Goals:**
 - Redesign dashboard navigation.
 - Change Clerk authentication or API Key authentication flows.
-- Remove documented Devlens routes such as `/dashboard/cli-config`, `/dashboard/endpoint`, or `/dashboard/console-log`.
+- Remove documented Devlens routes such as `/dashboard/cli-config`, `/dashboard/endpoint`, or `/dashboard/console-log`; `/dashboard/cli-config` may redirect to existing `/dashboard/cli-tools` until route names are fully migrated.
 - Change database schema unless implementation discovers settings backed only by removable UI code.
 
 ## Decisions

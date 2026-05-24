@@ -26,7 +26,7 @@ export function useCopyToClipboard(resetDelay = 2000) {
         document.body.removeChild(textarea);
       }
     };
-    write();
+    write().catch(() => {});
     setCopied(id);
 
     if (timeoutRef.current) {

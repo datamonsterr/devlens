@@ -18,7 +18,7 @@
 - `/dashboard/models`: Manager/Developer Model Browser.
 - `/dashboard/api-keys`: Developer API Keys; Manager metadata/revocation.
 - `/dashboard/usage`: role-filtered analytics.
-- `/dashboard/cli-config`: CLI Config Snippets.
+- `/dashboard/cli-config`: CLI Config Snippets (aliased to `/dashboard/cli-tools` with redirect).
 - `/dashboard/console-log`: role-filtered sanitized logs.
 - `/dashboard/endpoint`: Team cloudflared endpoint.
 

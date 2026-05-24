@@ -11,7 +11,7 @@ Source of truth for Devlens feature specs. OpenSpec wins when code and docs disa
 - Model Alias support
 - Pricing display/override foundation
 - Usage tracking and request logs
-- Cloudflared team endpoint
+- Cloudflared team endpoint locally; Vercel deployments use the deployed Vercel URL as the API endpoint
 
 ## 9router features to change for Devlens
 

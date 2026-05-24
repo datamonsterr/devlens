@@ -66,6 +66,10 @@ async function trySqlJs() {
 }
 
 async function initAdapter() {
+  if (process.env.VERCEL && !process.env.TURSO_DATABASE_URL) {
+    throw new Error("[DB] TURSO_DATABASE_URL required on Vercel; local SQLite filesystem fallback disabled");
+  }
+
   // Order per runtime:
   //   Turso: libSQL when TURSO_DATABASE_URL exists
   //   Bun:  bun:sqlite → sql.js

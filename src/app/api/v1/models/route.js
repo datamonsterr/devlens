@@ -138,32 +138,31 @@ function comboMatchesKinds(combo, kindFilter) {
  * Build OpenAI-format models list filtered by service kinds.
  * @param {string[]} kindFilter - List of service kinds to include (e.g. ["llm"], ["webSearch","webFetch"]).
  */
-export async function buildModelsList(kindFilter) {
+export async function buildModelsList(kindFilter, teamId) {
   let connections = [];
   try {
-    connections = await getProviderConnections();
-    connections = connections.filter(c => c.isActive !== false);
+    connections = await getProviderConnections({ teamId, isActive: true });
   } catch (e) {
     console.log("Could not fetch providers, returning all models");
   }
 
   let combos = [];
   try {
-    combos = await getCombos();
+    combos = await getCombos(teamId);
   } catch (e) {
     console.log("Could not fetch combos");
   }
 
   let customModels = [];
   try {
-    customModels = await getCustomModels();
+    customModels = await getCustomModels(teamId);
   } catch (e) {
     console.log("Could not fetch custom models");
   }
 
   let modelAliases = {};
   try {
-    modelAliases = await getModelAliases();
+    modelAliases = await getModelAliases(teamId);
   } catch (e) {
     console.log("Could not fetch model aliases");
   }
@@ -422,7 +421,7 @@ export async function GET(request) {
     const auth = await authenticateApiKey(request);
     if (auth.error) return auth.error;
 
-    const data = await buildModelsList([LLM_KIND]);
+    const data = await buildModelsList([LLM_KIND], auth.teamId);
     return Response.json({ object: "list", data }, {
       headers: { "Access-Control-Allow-Origin": "*" },
     });

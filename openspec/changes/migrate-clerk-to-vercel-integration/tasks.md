@@ -34,7 +34,7 @@
 - [x] 4.2 If matcher exists, ensure it includes `'/(api|trpc)(.*)'`
 - [x] 4.3 Ensure matcher includes `'/__clerk/(.*)'` exactly once after `'/(api|trpc)(.*)'`
 - [x] 4.4 Ensure matcher does not protect `/v1/*` in a way that bypasses API Key auth
-- [ ] 4.5 Add or adjust tests/manual checks for dashboard protected route behavior if coverage exists
+- [x] 4.5 Add or adjust tests/manual checks for dashboard protected route behavior if coverage exists
 
 ## 5. Auth UI controls
 

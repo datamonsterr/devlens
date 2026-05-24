@@ -28,6 +28,12 @@ Current schema is declared in `src/lib/db/schema.js` and versioned migrations li
 
 Startup may apply schema migrations, but only schema migrations. Data migration from local SQLite to Turso is never automatic at app startup.
 
+## Invite/onboarding fields
+
+`users.inviteStatus` tracks Developer invite onboarding state: `pending` before onboarding, `onboarded` after Clerk membership creation. Migration `005-developer-invite-status-normalization` normalizes legacy `invited`→`pending`, `accepted`→`onboarded`, and placeholder `invite:*` Developers without status→`pending`.
+
+`users.inviteId` stores Clerk invitation id when available. `users.onboardingEmailStatus` stores onboarding email state such as `pending`, `sent`, `skipped`, or `failed`.
+
 ## Turso migration coordination
 
 Vercel cold starts can happen concurrently against one Turso database, so Turso schema migration startup coordinates with a Turso-backed migration lock:

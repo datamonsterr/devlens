@@ -5,6 +5,7 @@
 - Clerk protects `/dashboard/*` and management `/api/*`.
 - Route handlers resolve Team context from Clerk Organization membership and local `users` row.
 - Team context self-heals missing Clerk Organization→Team and Clerk user→local user rows from signed-in Clerk Organization session when webhook creation was missed.
+- Clerk membership creation for invited Developer replaces placeholder `invite:*` user with real Clerk user id and sets invite status to `onboarded`.
 - `/api/team` exposes server-resolved Team context for client role hooks.
 - Server checks enforce Manager or Developer permissions.
 - Client role checks are presentation only and must read `/api/team`, not only `user.publicMetadata`.

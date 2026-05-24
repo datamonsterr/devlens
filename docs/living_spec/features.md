@@ -41,6 +41,7 @@ Source of truth for Devlens feature specs. OpenSpec wins when code and docs disa
 - [Role-based access](feature_spec/role-based-access.md)
 - [Team management](feature_spec/team-management.md)
 - [Developer API Keys](feature_spec/developer-api-keys.md)
+- [Developer invite onboarding](feature_spec/developer-invite-onboarding.md)
 - [Provider Connections](feature_spec/provider-connections.md)
 - [Combos](feature_spec/combos.md)
 - [Model Browser](feature_spec/model-browser.md)

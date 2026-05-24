@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireManagerContext } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
 import { generateApiKey, hashApiKey } from "@/lib/apiKeyUtils";
-import { sendDeveloperOnboardingEmail } from "@/lib/onboardingEmail";
+import { getApiBaseUrl, getPublicAppUrl, sendDeveloperOnboardingEmail } from "@/lib/onboardingEmail";
 import { v4 as uuidv4 } from "uuid";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +18,8 @@ export async function GET() {
         SUM(CASE WHEN ak.isActive = 1 THEN 1 ELSE 0 END) as activeApiKeyCount,
         MAX(ak.lastUsedAt) as lastKeyUsedAt,
         MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.id ELSE NULL END) as assignedApiKeyId,
-        MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.createdAt ELSE NULL END) as assignedApiKeyCreatedAt
+        MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.createdAt ELSE NULL END) as assignedApiKeyCreatedAt,
+        MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.isActive ELSE 0 END) as assignedApiKeyActive
        FROM users u
        LEFT JOIN apiKeys ak ON ak.userId = u.id
        WHERE u.teamId = ?
@@ -85,11 +86,11 @@ export async function POST(request) {
     if (existing) {
       await adapter.run(
         `UPDATE users SET inviteStatus = ?, inviteId = ?, isActive = 1, updatedAt = ? WHERE id = ? AND teamId = ?`,
-        ["invited", invite.id || null, now, userId, ctx.teamId]
+        ["pending", invite.id || null, now, userId, ctx.teamId]
       );
     } else {
       await adapter.run(
-        `INSERT INTO users(id, clerkUserId, email, teamId, role, inviteStatus, inviteId, onboardingEmailStatus, isActive, createdAt, updatedAt) VALUES(?, ?, ?, ?, 'developer', 'invited', ?, 'pending', 1, ?, ?)`,
+        `INSERT INTO users(id, clerkUserId, email, teamId, role, inviteStatus, inviteId, onboardingEmailStatus, isActive, createdAt, updatedAt) VALUES(?, ?, ?, ?, 'developer', 'pending', ?, 'pending', 1, ?, ?)`,
         [userId, clerkUserId, normalizedEmail, ctx.teamId, invite.id || null, now, now]
       );
     }
@@ -112,12 +113,17 @@ export async function POST(request) {
       );
     }
 
+    const publicAppUrl = getPublicAppUrl(request.url);
+    const signInUrl = invite.url || invite.invitation_url || `${publicAppUrl}/onboarding/developer`;
+    const apiBaseUrl = getApiBaseUrl(request.url);
     let onboardingEmailStatus = "skipped";
     try {
       const emailResult = await sendDeveloperOnboardingEmail({
         email: normalizedEmail,
         teamName: team?.name || "your Team",
-        inviteUrl: invite.url || invite.invitation_url || null,
+        inviteUrl: signInUrl,
+        signInUrl,
+        apiBaseUrl,
       });
       onboardingEmailStatus = emailResult.status;
     } catch (emailError) {
@@ -131,7 +137,7 @@ export async function POST(request) {
     const apiKey = { id: keyId, name: "Initial Developer Key" };
     if (keyValue) apiKey.key = keyValue;
 
-    return NextResponse.json({ success: true, invited: normalizedEmail, userId, apiKey, onboardingEmailStatus }, { status: 202 });
+    return NextResponse.json({ success: true, invited: normalizedEmail, userId, apiKey, onboardingEmailStatus, signInUrl, apiBaseUrl }, { status: 202 });
   } catch (error) {
     if (error instanceof Response) return error;
     return NextResponse.json({ error: error.message }, { status: 500 });

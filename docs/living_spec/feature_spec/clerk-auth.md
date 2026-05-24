@@ -17,6 +17,8 @@ Authenticate Managers and Developers through Clerk sessions and Clerk Organizati
 - Developer joins existing Team by Manager invitation.
 - Manager invitation creates a usable Clerk Organization invitation scoped to the Team.
 - Invitation APIs must fail visibly when Clerk invitation creation fails.
+- Invited Developer starts with `pending` status and becomes `onboarded` when Clerk membership creation completes onboarding.
+- Onboarding email includes sign-in URL and canonical API base URL when email dispatch is configured.
 - Dashboard and management APIs require Clerk session.
 - `/v1/*` uses API Key auth, not Clerk session.
 - Vercel production uses Clerk environment variables from the Vercel integrated Clerk setup.

@@ -10,13 +10,13 @@
 ## Dashboard routes
 
 - `/dashboard`: role-aware home.
-- `/dashboard/team`: Manager Team management.
+- `/dashboard/team`: Manager Team management, Developer invite status, assigned API Key metadata/copy controls.
 - `/dashboard/providers`: Manager Provider Connections.
 - `/dashboard/combos`: Manager Combos.
 - `/dashboard/pricing`: Manager Pricing Overrides.
 - `/dashboard/rtk-pool`: Manager RTK Pool.
 - `/dashboard/models`: Manager/Developer Model Browser.
-- `/dashboard/api-keys`: Developer API Keys; Manager metadata/revocation.
+- `/dashboard/keys`: Developer API Keys and API access view with base URL copy; Manager redirects to Team management.
 - `/dashboard/usage`: role-filtered analytics.
 - `/dashboard/cli-config`: CLI Config Snippets (aliased to `/dashboard/cli-tools` with redirect).
 - `/dashboard/console-log`: role-filtered sanitized logs.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button, Card, Input, Badge } from "@/shared/components";
 import RoleGuard from "@/shared/components/RoleGuard";
+import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 
 export default function TeamPage() {
   return (
@@ -18,6 +19,7 @@ function TeamContent() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [newKey, setNewKey] = useState(null);
+  const { copied, copy } = useCopyToClipboard(3000);
 
   async function load() {
     const res = await fetch("/api/team/members");
@@ -83,9 +85,19 @@ function TeamContent() {
               <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
                 Initial Developer Key created — copy it now
               </p>
-              <code className="block mt-1 text-xs font-mono text-amber-700 dark:text-amber-300 break-all">
-                {newKey.key}
-              </code>
+              <div className="mt-1 flex items-center gap-2">
+                <code className="flex-1 text-xs font-mono text-amber-700 dark:text-amber-300 break-all">
+                  {newKey.key}
+                </code>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={copied === "new-key" ? "check" : "content_copy"}
+                  onClick={() => copy(newKey.key, "new-key")}
+                >
+                  {copied === "new-key" ? "Copied" : "Copy"}
+                </Button>
+              </div>
               <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                 Store this key safely. You will not see the full key again.
               </p>
@@ -134,9 +146,23 @@ function TeamContent() {
                       <Badge variant="error" size="sm" dot>Inactive</Badge>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-xs text-text-muted">{m.inviteStatus || (m.clerkUserId ? "joined" : "—")}</td>
+                  <td className="px-4 py-3 text-xs text-text-muted">{m.inviteStatus || (m.clerkUserId ? "onboarded" : "—")}</td>
                   <td className="px-4 py-3">{m.activeApiKeyCount || 0}/{m.apiKeyCount || 0}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-text-muted">{m.assignedApiKeyId ? (m.assignedApiKeyId.slice(0, 12) + "...") : (m.apiKeyCount > 0 ? "Yes" : "—")}</td>
+                  <td className="px-4 py-3 text-xs font-mono text-text-muted">
+                    {m.assignedApiKeyId ? (
+                      <div className="flex items-center gap-2">
+                        <span title={m.assignedApiKeyId}>{m.assignedApiKeyId.slice(0, 12)}...</span>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          icon={copied === m.assignedApiKeyId ? "check" : "content_copy"}
+                          onClick={() => copy(m.assignedApiKeyId, m.assignedApiKeyId)}
+                        >
+                          {copied === m.assignedApiKeyId ? "Copied" : "Copy ID"}
+                        </Button>
+                      </div>
+                    ) : (m.apiKeyCount > 0 ? "Yes" : "—")}
+                  </td>
                   <td className="px-4 py-3 text-xs text-text-muted">{m.lastKeyUsedAt || "never"}</td>
                   <td className="px-4 py-3 text-right">
                     <Button variant="danger" size="sm" onClick={() => deactivate(m.id)}>Deactivate</Button>

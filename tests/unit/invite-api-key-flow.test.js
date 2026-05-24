@@ -48,6 +48,8 @@ describe("team invite and api key integration", () => {
       }),
     }));
     vi.doMock("@/lib/onboardingEmail", () => ({
+      getPublicAppUrl: vi.fn(() => "https://devlens.test"),
+      getApiBaseUrl: vi.fn(() => "https://devlens.test/v1"),
       sendDeveloperOnboardingEmail: vi.fn().mockResolvedValue({ status: "skipped" }),
     }));
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_xxx");
@@ -74,6 +76,8 @@ describe("team invite and api key integration", () => {
 
   it("POST invite creates pending member with api key idempotently", async () => {
     vi.resetModules();
+    const runMock = vi.fn().mockResolvedValue(undefined);
+    const sendDeveloperOnboardingEmail = vi.fn().mockResolvedValue({ status: "skipped" });
     vi.doMock("@/lib/auth", () => ({
       requireManagerContext: vi.fn().mockResolvedValue({
         teamId: "team-a",
@@ -83,17 +87,19 @@ describe("team invite and api key integration", () => {
     vi.doMock("@/lib/db/driver", () => ({
       getAdapter: vi.fn().mockResolvedValue({
         get: vi.fn().mockResolvedValue(null),
-        run: vi.fn().mockResolvedValue(undefined),
+        run: runMock,
         all: vi.fn().mockResolvedValue([]),
       }),
     }));
     vi.doMock("@/lib/onboardingEmail", () => ({
-      sendDeveloperOnboardingEmail: vi.fn().mockResolvedValue({ status: "skipped" }),
+      getPublicAppUrl: vi.fn(() => "https://devlens.test"),
+      getApiBaseUrl: vi.fn(() => "https://devlens.test/v1"),
+      sendDeveloperOnboardingEmail,
     }));
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_xxx");
 
     const mockFetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ id: "inv_001" }), {
+      new Response(JSON.stringify({ id: "inv_001", url: "https://clerk.test/invite" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       })
@@ -111,9 +117,19 @@ describe("team invite and api key integration", () => {
     expect(res.status).toBe(202);
     expect(body.success).toBe(true);
     expect(body.invited).toBe("test@example.com");
+    expect(body.apiBaseUrl).toBe("https://devlens.test/v1");
+    expect(body.signInUrl).toBe("https://clerk.test/invite");
     expect(body.apiKey).toBeDefined();
     expect(body.apiKey.name).toBe("Initial Developer Key");
     expect(body.apiKey.key).toBe(`dvl_${MOCK_KEY}`);
+    expect(runMock).toHaveBeenCalledWith(
+      expect.stringContaining("INSERT INTO users"),
+      expect.arrayContaining(["test@example.com", "team-a", "inv_001"])
+    );
+    expect(sendDeveloperOnboardingEmail).toHaveBeenCalledWith(expect.objectContaining({
+      signInUrl: "https://clerk.test/invite",
+      apiBaseUrl: "https://devlens.test/v1",
+    }));
   });
 
   it("POST invite reuses existing member and initial api key on retry", async () => {
@@ -136,6 +152,8 @@ describe("team invite and api key integration", () => {
       }),
     }));
     vi.doMock("@/lib/onboardingEmail", () => ({
+      getPublicAppUrl: vi.fn(() => "https://devlens.test"),
+      getApiBaseUrl: vi.fn(() => "https://devlens.test/v1"),
       sendDeveloperOnboardingEmail: vi.fn().mockResolvedValue({ status: "skipped" }),
     }));
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_xxx");
@@ -179,6 +197,8 @@ describe("team invite and api key integration", () => {
       }),
     }));
     vi.doMock("@/lib/onboardingEmail", () => ({
+      getPublicAppUrl: vi.fn(() => "https://devlens.test"),
+      getApiBaseUrl: vi.fn(() => "https://devlens.test/v1"),
       sendDeveloperOnboardingEmail: vi.fn().mockRejectedValue(new Error("SMTP connection refused")),
     }));
     vi.stubEnv("CLERK_SECRET_KEY", "sk_test_xxx");
@@ -227,5 +247,54 @@ describe("manager keys page redirect", () => {
       "utf8"
     );
     expect(page).toContain('window.location.replace("/dashboard/team")');
+  });
+});
+
+describe("developer invite onboarding status", () => {
+  it("marks Clerk membership invite as onboarded", () => {
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const webhook = fs.readFileSync(
+      path.resolve(__dirname, "../../src/app/api/auth/clerk-webhook/route.js"),
+      "utf8"
+    );
+    expect(webhook).toContain("inviteStatus = 'onboarded'");
+  });
+
+  it("normalizes legacy invite statuses", () => {
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const migration = fs.readFileSync(
+      path.resolve(__dirname, "../../src/lib/db/migrations/005-developer-invite-status-normalization.js"),
+      "utf8"
+    );
+    expect(migration).toContain("inviteStatus = 'pending'");
+    expect(migration).toContain("inviteStatus = 'onboarded'");
+  });
+});
+
+describe("developer and manager copy UI", () => {
+  it("shows developer API base URL and copy guidance", () => {
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const page = fs.readFileSync(
+      path.resolve(__dirname, "../../src/app/(dashboard)/dashboard/keys/page.js"),
+      "utf8"
+    );
+    expect(page).toContain("API Base URL");
+    expect(page).toContain("api-base-url");
+    expect(page).toContain("Full API Key plaintext appears only when created or rotated");
+  });
+
+  it("shows manager copy controls for assigned key display", () => {
+    const fs = require("node:fs");
+    const path = require("node:path");
+    const page = fs.readFileSync(
+      path.resolve(__dirname, "../../src/app/(dashboard)/dashboard/team/page.js"),
+      "utf8"
+    );
+    expect(page).toContain("new-key");
+    expect(page).toContain("Copy ID");
+    expect(page).toContain("onboarded");
   });
 });

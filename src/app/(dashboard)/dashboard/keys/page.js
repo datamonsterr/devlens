@@ -8,6 +8,7 @@ import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 export default function KeysPage() {
   const { isManager, isDeveloper } = useRole();
   const [keys, setKeys] = useState([]);
+  const [apiBaseUrl, setApiBaseUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
 
@@ -42,6 +43,10 @@ export default function KeysPage() {
   useEffect(() => {
     fetchKeys();
   }, [fetchKeys]);
+
+  useEffect(() => {
+    setApiBaseUrl(`${window.location.origin}/v1`);
+  }, []);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -179,6 +184,34 @@ export default function KeysPage() {
             Dismiss
           </button>
         </div>
+      )}
+
+      {isDeveloper && (
+        <Card>
+          <div className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-lg font-medium">API access</h2>
+              <p className="text-sm text-text-muted mt-1">Use this base URL with your API Key for /v1/* requests.</p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-text-muted mb-1">API Base URL</label>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 block px-3 py-2 rounded-lg bg-black/5 dark:bg-white/5 font-mono text-sm break-all">
+                  {apiBaseUrl}
+                </code>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={copied === "api-base-url" ? "check" : "content_copy"}
+                  onClick={() => copy(apiBaseUrl, "api-base-url")}
+                >
+                  {copied === "api-base-url" ? "Copied" : "Copy"}
+                </Button>
+              </div>
+            </div>
+            <p className="text-xs text-text-muted">Full API Key plaintext appears only when created or rotated. If unavailable, create or rotate a key.</p>
+          </div>
+        </Card>
       )}
 
       {keys.length === 0 ? (

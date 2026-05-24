@@ -88,7 +88,7 @@ export async function POST(req) {
             if (pending) {
               const now = new Date().toISOString();
               await adapter.run(
-                `UPDATE users SET clerkUserId = ?, inviteStatus = 'accepted', updatedAt = ? WHERE id = ?`,
+                `UPDATE users SET clerkUserId = ?, inviteStatus = 'onboarded', updatedAt = ? WHERE id = ?`,
                 [clerkUserId, now, pending.id]
               );
               break;

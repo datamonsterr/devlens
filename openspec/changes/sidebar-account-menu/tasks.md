@@ -19,4 +19,4 @@
 
 - [x] 4.1 Update or add tests for account menu actions and sidebar absence of Stop/standalone Settings.
 - [x] 4.2 Run relevant UI tests for dashboard navigation.
-- [ ] 4.3 Run project lint and typecheck commands.
+- [x] 4.3 Run project lint and typecheck commands.

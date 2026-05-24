@@ -10,7 +10,25 @@ import ThemeToggle from "@/shared/components/ThemeToggle";
 import { useHeaderSearchStore } from "@/store/headerSearchStore";
 import { OAUTH_PROVIDERS, APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS } from "@/shared/constants/providers";
+import { useRole } from "@/shared/hooks/useRole";
 import { translate } from "@/i18n/runtime";
+
+const PAGE_MAP = [
+  ["/dashboard/providers", { title: "Provider Connections", description: "Configure and monitor team provider connections", icon: "dns" }],
+  ["/dashboard/combos", { title: "Combos", description: "Configure fallback model sequences for your Team", icon: "layers" }],
+  ["/dashboard/usage", { title: "Usage Analytics", description: "Track requests, tokens, RTK savings, and spend", icon: "bar_chart" }],
+  ["/dashboard/quota", { title: "RTK Pool", description: "Manage Team-level RTK token savings capacity", icon: "data_usage" }],
+  ["/dashboard/cli-tools", { title: "CLI Config Snippets", description: "Quickstart configs for CLI tools and SDKs", icon: "terminal" }],
+  ["/dashboard/skills", { title: "Agent Skills", description: "Reusable skills and setup snippets for your Team", icon: "extension" }],
+  ["/dashboard/endpoint", { title: "API Quickstart", description: "Base URL, API key usage, and connection options", icon: "rocket_launch" }],
+  ["/dashboard/profile", { title: "Account Settings", description: "Manage personal and Team-level dashboard settings", icon: "settings" }],
+  ["/dashboard/pricing", { title: "Pricing Overrides", description: "Set and audit model-level pricing behavior", icon: "sell" }],
+  ["/dashboard/team", { title: "Team Management", description: "Invite Developers and manage Team membership", icon: "groups" }],
+  ["/dashboard/keys", { title: "API Keys", description: "Manage Developer API Keys for /v1/* access", icon: "key" }],
+  ["/dashboard/models", { title: "Model Browser", description: "Browse available models, providers, and Combos", icon: "hub" }],
+  ["/dashboard/console-log", { title: "Console Log", description: "Live application logs for debugging and support", icon: "monitor" }],
+  ["/dashboard/translator", { title: "Translator", description: "Debug translation between API payload formats", icon: "translate" }],
+];
 
 const getPageInfo = (pathname) => {
   if (!pathname) return { title: "", description: "", breadcrumbs: [] };
@@ -67,104 +85,28 @@ const getPageInfo = (pathname) => {
     }
   }
 
-  if (pathname.includes("/providers") && !pathname.includes("/media-providers"))
+  if (pathname === "/dashboard") {
     return {
-      title: "Providers",
-      description: "Manage your AI provider connections",
-      icon: "dns",
+      title: "Portal Overview",
+      description: "Role-aware summary of your Team and developer activity",
+      icon: "dashboard",
       breadcrumbs: [],
     };
-  if (pathname.includes("/combos"))
-    return {
-      title: "Combos",
-      description: "Model combos with fallback",
-      icon: "layers",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/usage"))
-    return {
-      title: "Usage & Analytics",
-      description:
-        "Monitor your API usage, token consumption, and request logs",
-      icon: "bar_chart",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/auth-files"))
-    return {
-      title: "Auth Files",
-      description: "Map provider credentials stored in the local database",
-      icon: "vpn_key",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/quota"))
-    return {
-      title: "Quota Tracker",
-      description: "Track and manage your API quota limits",
-      icon: "data_usage",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/mitm"))
-    return {
-      title: "MITM Proxy",
-      description: "Intercept CLI tool traffic and route through Devlens",
-      icon: "security",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/cli-tools"))
-    return {
-      title: "CLI Tools",
-      description: "Configure CLI tools",
-      icon: "terminal",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/skills"))
-    return {
-      title: "Agent Skills",
-      description: "Copy a link and paste to your AI to use Devlens — no install needed",
-      icon: "extension",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/endpoint"))
-    return {
-      title: "Endpoint",
-      description: "API endpoint configuration",
-      icon: "api",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/profile"))
-    return {
-      title: "Settings",
-      description: "Manage your preferences",
-      icon: "settings",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/translator"))
-    return {
-      title: "Translator",
-      description: "Debug translation flow between formats",
-      icon: "translate",
-      breadcrumbs: [],
-    };
-  if (pathname.includes("/console-log"))
-    return {
-      title: "Console Log",
-      description: "Live server console output",
-      icon: "monitor",
-      breadcrumbs: [],
-    };
-  if (pathname === "/dashboard")
-    return {
-      title: "Endpoint",
-      description: "API endpoint configuration",
-      icon: "api",
-      breadcrumbs: [],
-    };
+  }
+
+  for (const [prefix, page] of PAGE_MAP) {
+    if (pathname.startsWith(prefix)) {
+      return { ...page, breadcrumbs: [] };
+    }
+  }
+
   return { title: "", description: "", breadcrumbs: [] };
 };
 
 export default function Header({ onMenuClick, showMenuButton = true }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { isManager, isDeveloper } = useRole();
   const [displayName, setDisplayName] = useState("");
   const [loginMethod, setLoginMethod] = useState("");
 
@@ -211,21 +153,8 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
   };
 
   return (
-    <header className="shrink-0 flex items-center justify-between gap-3 px-4 lg:px-8 pt-3 pb-2 border-b border-border-subtle bg-surface/60 backdrop-blur-xl lg:bg-transparent lg:backdrop-blur-none z-20">
-      {/* Mobile menu button */}
-      <div className="flex items-center gap-3 lg:hidden shrink-0">
-        {showMenuButton && (
-          <button
-            onClick={onMenuClick}
-            className="text-text-main hover:text-primary transition-colors"
-          >
-            <span className="material-symbols-outlined">menu</span>
-          </button>
-        )}
-      </div>
-
-      {/* Page title with breadcrumbs */}
-      <div className="flex flex-col min-w-0 flex-1">
+    <header className="z-20 flex shrink-0 items-start gap-3 border-b border-border-subtle/70 bg-surface/60 px-4 pb-3 pt-3 backdrop-blur-xl sm:items-center lg:px-8">
+      <div className="flex min-w-0 flex-1 flex-col">
         {breadcrumbs.length > 0 ? (
           <div className="flex items-center gap-2">
             {breadcrumbs.map((crumb, index) => (
@@ -241,7 +170,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
                 {crumb.href ? (
                   <Link
                     href={crumb.href}
-                    className="text-text-muted hover:text-primary transition-colors"
+                    className="text-text-muted hover:text-brand-600 transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -256,7 +185,7 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
                         fallbackText={crumb.label.slice(0, 2).toUpperCase()}
                       />
                     )}
-                    <h1 className="text-base lg:text-2xl font-semibold text-text-main tracking-tight truncate">
+                    <h1 className="truncate text-base font-semibold tracking-tight text-text-main lg:text-2xl">
                       {translate(crumb.label)}
                     </h1>
                   </div>
@@ -267,14 +196,13 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
         ) : title ? (
           <div>
             <div className="flex items-center gap-2">
-              {icon && (
-                <span className="material-symbols-outlined text-primary text-xl lg:text-2xl">
-                  {icon}
-                </span>
-              )}
-              <h1 className="text-base lg:text-2xl font-semibold tracking-tight truncate">
+              {icon && <span className="material-symbols-outlined text-brand-600 dark:text-brand-300 text-xl lg:text-2xl">{icon}</span>}
+              <h1 className="truncate text-base font-semibold tracking-tight lg:text-2xl">
                 {translate(title)}
               </h1>
+              <span className="hidden rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[11px] font-medium text-text-muted sm:inline-flex">
+                {isManager ? "Manager Portal" : isDeveloper ? "Developer Portal" : "Portal"}
+              </span>
             </div>
             {description && (
               <p className="hidden lg:block text-sm text-text-muted truncate">
@@ -285,18 +213,26 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
         ) : null}
       </div>
 
-      {/* Right actions */}
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
         {displayName && loginMethod === "OIDC" && (
-          <div className="hidden sm:flex items-center max-w-[220px] px-3 py-1.5 rounded-full border border-border bg-surface/70 text-xs text-text-muted truncate">
-            <span className="material-symbols-outlined text-[14px] mr-1.5 text-primary">person</span>
+          <div className="hidden max-w-[220px] items-center truncate rounded-full border border-border bg-surface/70 px-3 py-1.5 text-xs text-text-muted sm:flex">
+            <span className="material-symbols-outlined mr-1.5 text-[14px] text-brand-600 dark:text-brand-300">person</span>
             <span className="truncate">{displayName}</span>
-            <span className="ml-2 shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
+            <span className="ml-2 shrink-0 rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-300">
               OIDC
             </span>
           </div>
         )}
         <HeaderSearch />
+        {showMenuButton && (
+          <button
+            onClick={onMenuClick}
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border text-text-muted transition-colors hover:bg-surface-2 hover:text-text-main lg:hidden"
+            aria-label="Open sidebar menu"
+          >
+            <span className="material-symbols-outlined text-[18px]">menu</span>
+          </button>
+        )}
         <ThemeToggle />
         <HeaderMenu onLogout={handleLogout} />
       </div>

@@ -38,7 +38,7 @@ export default function DashboardLayout({ children }) {
   const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-bg">
+    <div className="flex h-screen w-full overflow-hidden bg-bg text-text-main">
       <div className="fixed top-4 right-4 z-[80] flex w-[min(92vw,380px)] flex-col gap-2">
         {notifications.map((n) => {
           const style = getToastStyle(n.type);
@@ -91,12 +91,17 @@ export default function DashboardLayout({ children }) {
       </div>
 
       {/* Main content */}
-      <main className="flex flex-col flex-1 h-full min-w-0 relative transition-colors duration-300 isolate">
-        {/* Faint grid background */}
-        <div className="landing-grid absolute inset-0 pointer-events-none -z-10" aria-hidden="true" />
+      <main className="flex min-w-0 flex-1 flex-col relative isolate overflow-hidden">
+        <div className="dashboard-chrome-bg absolute inset-0 -z-10 pointer-events-none" aria-hidden="true" />
         <Header key={pathname} onMenuClick={() => setSidebarOpen(true)} />
-        <div className={`flex-1 overflow-y-auto custom-scrollbar ${pathname === "/dashboard/basic-chat" ? "" : "p-6 lg:p-10"} ${pathname === "/dashboard/basic-chat" ? "flex flex-col overflow-hidden" : ""}`}>
-          <div className={`${pathname === "/dashboard/basic-chat" ? "flex-1 w-full h-full flex flex-col" : "max-w-7xl mx-auto"}`}>{children}</div>
+        <div
+          className={`flex-1 overflow-y-auto custom-scrollbar ${
+            pathname === "/dashboard/basic-chat" ? "" : "px-4 pb-8 pt-5 sm:px-6 lg:px-10"
+          } ${pathname === "/dashboard/basic-chat" ? "flex flex-col overflow-hidden" : ""}`}
+        >
+          <div className={`${pathname === "/dashboard/basic-chat" ? "flex-1 w-full h-full flex flex-col" : "mx-auto w-full max-w-[1240px]"}`}>
+            {children}
+          </div>
         </div>
       </main>
     </div>

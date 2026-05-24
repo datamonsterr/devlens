@@ -107,12 +107,12 @@ async function refreshAndUpdateCredentials(connection, force = false, proxyOptio
 export async function GET(req, { params }) {
   let connection;
   try {
-    await requireManagerContext();
+    const ctx = await requireManagerContext();
     const { connectionId } = await params;
 
 
     // Get connection from database
-    connection = await getProviderConnectionById(connectionId);
+    connection = await getProviderConnectionById(connectionId, ctx.teamId);
     if (!connection) {
       return Response.json({ error: "Connection not found" }, { status: 404 });
     }

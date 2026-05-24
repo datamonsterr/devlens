@@ -37,7 +37,7 @@ export async function GET(request) {
         dateClause = " AND timestamp >= ?";
         params.push(start);
       }
-      const row = db.get(
+      const row = await db.get(
         `SELECT COUNT(*) totalRequests, COALESCE(SUM(promptTokens), 0) totalPromptTokens, COALESCE(SUM(completionTokens), 0) totalCompletionTokens, COALESCE(SUM(cost), 0) totalCost FROM usageHistory WHERE teamId = ? AND userId = ?${dateClause}`,
         params
       );

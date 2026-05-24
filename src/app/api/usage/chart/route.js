@@ -28,7 +28,7 @@ export async function GET(request) {
     if (ctx.role === "developer") {
       const db = await getAdapter();
       const start = getPeriodStart(period);
-      const rows = db.all(
+      const rows = await db.all(
         `SELECT date(timestamp) label, COALESCE(SUM(promptTokens + completionTokens), 0) tokens, COALESCE(SUM(cost), 0) cost FROM usageHistory WHERE teamId = ? AND userId = ? AND timestamp >= ? GROUP BY date(timestamp) ORDER BY label ASC`,
         [ctx.teamId, ctx.userId, start]
       );

@@ -16,7 +16,7 @@ export async function GET(request) {
 
   if (ctx.role === "developer") {
     const db = await getAdapter();
-    const row = db.get(
+    const row = await db.get(
       `SELECT COUNT(*) totalRequests, COALESCE(SUM(promptTokens), 0) totalPromptTokens, COALESCE(SUM(completionTokens), 0) totalCompletionTokens, COALESCE(SUM(cost), 0) totalCost FROM usageHistory WHERE teamId = ? AND userId = ?`,
       [ctx.teamId, ctx.userId]
     );

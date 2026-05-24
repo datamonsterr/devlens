@@ -4,6 +4,18 @@ import { getSettings, updateSettings } from "@/lib/localDb";
 import { waitForHealth, probeUrlAlive } from "./networkProbe.js";
 
 const WORKER_URL = process.env.TUNNEL_WORKER_URL || "https://abc-tunnel.us";
+const IS_VERCEL = !!process.env.VERCEL;
+
+function vercelEndpoint() {
+  if (process.env.DEVLENS_PUBLIC_API_ENDPOINT) return process.env.DEVLENS_PUBLIC_API_ENDPOINT.replace(/\/$/, "");
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  return "";
+}
+
+export function isVercelRuntime() {
+  return IS_VERCEL;
+}
 
 const tunnelSvc = {
   cancelToken: { cancelled: false },
@@ -36,6 +48,15 @@ function throwIfCancelled(token, label) {
 }
 
 export async function enableTunnel(localPort = 20261) {
+  if (IS_VERCEL) {
+    return {
+      success: false,
+      unsupported: true,
+      error: "Cloudflare quick tunnels are not supported on Vercel. Use deployed Vercel URL as API endpoint.",
+      publicUrl: vercelEndpoint(),
+    };
+  }
+
   console.log(`[Tunnel] enable start (port=${localPort})`);
   tunnelSvc.cancelToken = { cancelled: false };
   tunnelSvc.activeLocalPort = localPort;
@@ -112,6 +133,8 @@ export async function enableTunnel(localPort = 20261) {
 }
 
 export async function disableTunnel() {
+  if (IS_VERCEL) return { success: true, unsupported: true, publicUrl: vercelEndpoint() };
+
   console.log("[Tunnel] disable");
   // Abort any in-flight enable so it cannot resurrect state after we clear it
   tunnelSvc.cancelToken.cancelled = true;
@@ -131,6 +154,19 @@ export async function disableTunnel() {
 }
 
 export async function getTunnelStatus() {
+  if (IS_VERCEL) {
+    const endpoint = vercelEndpoint();
+    return {
+      enabled: !!endpoint,
+      settingsEnabled: !!endpoint,
+      tunnelUrl: "",
+      shortId: "",
+      publicUrl: endpoint,
+      running: false,
+      unsupported: true,
+    };
+  }
+
   const settings = await getSettings();
   const settingsEnabled = settings.tunnelEnabled === true;
   const state = loadState();

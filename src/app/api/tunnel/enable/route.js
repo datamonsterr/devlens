@@ -8,6 +8,7 @@ export async function POST() {
   try {
     await assertManager();
     const result = await enableTunnel();
+    if (result.unsupported) return NextResponse.json(result, { status: 501 });
     // Wait for DNS warmup to propagate at Cloudflare edge after tunnel registered
     await new Promise((r) => setTimeout(r, DNS_WARMUP_DELAY_MS));
     return NextResponse.json(result);

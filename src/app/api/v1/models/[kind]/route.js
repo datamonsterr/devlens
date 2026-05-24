@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const data = await buildModelsList(kindFilter);
+    const data = await buildModelsList(kindFilter, auth.teamId);
     return Response.json({ object: "list", data }, {
       headers: { "Access-Control-Allow-Origin": "*" },
     });

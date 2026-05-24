@@ -13,6 +13,7 @@ API Key identity determines Team data boundary and Developer usage attribution.
 - `/v1/*` validates `Authorization: Bearer <api-key>`.
 - Auth resolves Team, Developer, role, API Key id.
 - Router uses Team for Provider Connections, Combos, Model Aliases, Pricing Overrides, RTK Pool, and usage writes.
+- `/v1/models` and `/v1/models/{kind}` return only models, Combos, and Model Aliases available to the API Key's Team.
 - Developer role can call `/v1/*`; Manager dashboard role cannot use `/v1/*` unless also Developer via explicit API Key policy later.
 - `/v1beta/*` remains for compatibility.
 

@@ -13,6 +13,7 @@ New Devlens feature.
 
 - Manage Team.
 - Invite/remove Developers.
+- Assign initial Developer API Keys through Team management.
 - Manage Provider Connections.
 - Manage Combos.
 - Manage Pricing Overrides.
@@ -26,6 +27,10 @@ New Devlens feature.
 - View own usage.
 - Copy CLI Config Snippets.
 - Use `/v1/*` with API Key.
+
+## Manager cannot
+
+Use `/v1/*` with API Key or create standalone Manager API Keys outside Team management.
 
 ## Developer cannot
 

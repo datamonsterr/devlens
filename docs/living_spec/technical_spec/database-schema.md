@@ -33,10 +33,10 @@ Startup may apply schema migrations, but only schema migrations. Data migration 
 Vercel cold starts can happen concurrently against one Turso database, so Turso schema migration startup coordinates with a Turso-backed migration lock:
 
 - lock lives in `_migration_locks` and includes owner plus expiry fields;
-- one runner applies pending migrations;
+- one runner applies pending migrations and refreshes its lock lease while running;
 - concurrent runners wait for the lock and then re-check schema version through the normal migration path;
 - abandoned locks expire so later starts can proceed;
-- lock wait timeout fails safely before serving DB-dependent requests;
+- lock wait timeout fails safely before serving DB-dependent requests and remains retryable in-process;
 - migration version update is guarded with migration step execution where libSQL supports it.
 
 Unsupported SQLite pragmas must be ignored or handled in Turso mode without failing schema initialization.

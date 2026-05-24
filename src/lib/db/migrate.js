@@ -17,6 +17,7 @@ const _migratedAdapters = new WeakSet();
 
 const MIGRATION_LOCK_KEY = "schemaMigration";
 const MIGRATION_LOCK_TTL_MS = 120000;
+const MIGRATION_LOCK_REFRESH_MS = 30000;
 const MIGRATION_LOCK_WAIT_MS = 30000;
 const MIGRATION_LOCK_POLL_MS = 250;
 
@@ -51,6 +52,16 @@ async function tryAcquireMigrationLock(adapter, owner, now = Date.now()) {
   return result.changes > 0;
 }
 
+async function refreshMigrationLock(adapter, owner, now = Date.now()) {
+  const expiresAt = now + MIGRATION_LOCK_TTL_MS;
+  const timestamp = new Date(now).toISOString();
+  const result = await adapter.run(
+    `UPDATE _migration_locks SET expiresAt = ?, updatedAt = ? WHERE key = ? AND owner = ?`,
+    [expiresAt, timestamp, MIGRATION_LOCK_KEY, owner]
+  );
+  return result.changes > 0;
+}
+
 async function releaseMigrationLock(adapter, owner) {
   await adapter.run(`DELETE FROM _migration_locks WHERE key = ? AND owner = ?`, [MIGRATION_LOCK_KEY, owner]);
 }
@@ -67,10 +78,26 @@ async function withMigrationLock(adapter, fn) {
     await sleep(MIGRATION_LOCK_POLL_MS);
   }
 
+  let refreshFailure;
+  const refreshTimer = setInterval(() => {
+    refreshMigrationLock(adapter, owner).then((refreshed) => {
+      if (!refreshed && !refreshFailure) refreshFailure = new Error("[DB][migrate] lost Turso migration lock");
+    }).catch((err) => {
+      if (!refreshFailure) refreshFailure = err;
+    });
+  }, MIGRATION_LOCK_REFRESH_MS);
+
   try {
-    return await fn();
+    const result = await fn();
+    if (refreshFailure) throw refreshFailure;
+    return result;
   } finally {
-    await releaseMigrationLock(adapter, owner);
+    clearInterval(refreshTimer);
+    try {
+      await releaseMigrationLock(adapter, owner);
+    } catch (err) {
+      console.warn(`[DB][migrate] failed to release Turso migration lock: ${err.message}`);
+    }
   }
 }
 
@@ -267,7 +294,7 @@ async function importLegacyDetails(adapter, data) {
 // ─── Main entry ──────────────────────────────────────────────────────────
 export async function runMigrationOnce(adapter) {
   if (_migratedAdapters.has(adapter)) return;
-  _migratedAdapters.add(adapter);
+  let migrated = false;
 
   await withMigrationLock(adapter, async () => {
     // Capture freshness BEFORE migrations stamp _meta (otherwise we'd misclassify
@@ -313,11 +340,13 @@ export async function runMigrationOnce(adapter) {
       try { fs.writeFileSync(MIGRATED_MARKER, new Date().toISOString()); } catch {}
       pruneOldBackups();
       console.log(`[DB][migrate] JSON → SQLite in ${Date.now() - t0}ms | legacy JSON kept at DATA_DIR | backup: ${backupDir}`);
+      migrated = true;
       return;
     }
 
     if (fresh) {
       await setMetaWithAdapter(adapter, "appVersion", getAppVersion());
+      migrated = true;
       return;
     }
 
@@ -336,5 +365,21 @@ export async function runMigrationOnce(adapter) {
       try { backupFile(DATA_FILE, backupDir); } catch {}
       pruneOldBackups();
     }
+    migrated = true;
   });
+
+  if (migrated) _migratedAdapters.add(adapter);
 }
+
+export const __migrationLockTest = {
+  MIGRATION_LOCK_KEY,
+  MIGRATION_LOCK_TTL_MS,
+  MIGRATION_LOCK_REFRESH_MS,
+  MIGRATION_LOCK_WAIT_MS,
+  MIGRATION_LOCK_POLL_MS,
+  ensureMigrationLockTable,
+  tryAcquireMigrationLock,
+  refreshMigrationLock,
+  releaseMigrationLock,
+  withMigrationLock,
+};

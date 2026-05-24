@@ -84,14 +84,12 @@ export default function Sidebar({ onClose }) {
     return pathname.startsWith(href);
   };
 
-  // Open manual update panel (no countdown yet — user must click Copy to trigger shutdown)
   const handleUpdate = () => {
     setShowUpdateModal(false);
     setIsUpdating(true);
   };
 
-  const handleCopyUpdateCommand = async () => {
-    try { await navigator.clipboard.writeText(INSTALL_CMD); } catch {}
+  const handleCopyUpdateCommand = () => {
     copy(INSTALL_CMD);
   };
 
@@ -366,7 +364,7 @@ export default function Sidebar({ onClose }) {
         onClose={() => setShowUpdateModal(false)}
         onConfirm={handleUpdate}
         title="Update Devlens"
-        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it and shutdown to install manually.`}
+        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it and install manually.`}
         confirmText="Show Command"
         cancelText="Cancel"
         variant="primary"

@@ -21,5 +21,5 @@
 ## 4. Verification
 
 - [x] 4.1 Add or update tests covering absence of removed menu actions and settings.
-- [x] 4.2 Verify documented routes still render: `/dashboard/cli-config`, `/dashboard/endpoint`, `/dashboard/console-log`, and main dashboard routes.
+- [x] 4.2 Verify documented routes still render: `/dashboard/cli-config` (redirecting to `/dashboard/cli-tools`), `/dashboard/endpoint`, `/dashboard/console-log`, and main dashboard routes.
 - [x] 4.3 Run project lint, typecheck, and relevant tests from the implementation worktree.

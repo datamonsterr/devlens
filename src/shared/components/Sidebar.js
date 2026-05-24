@@ -37,7 +37,7 @@ const developerItems = [
   { href: "/dashboard/combos", label: "Combos", icon: "layers" },
   { href: "/dashboard/models", label: "Models", icon: "hub" },
   { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
-  { href: "/dashboard/cli-tools", label: "CLI Config", icon: "terminal" },
+  { href: "/dashboard/keys", label: "CLI Config", icon: "terminal" },
   { href: "/dashboard/console-log", label: "Console Log", icon: "terminal" },
   { href: "/dashboard/profile", label: "Account", icon: "account_circle" },
 ];

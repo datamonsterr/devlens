@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const middlewareSource = readFileSync(resolve(import.meta.dirname, "../../src/middleware.ts"), "utf8");
+const testDir = dirname(fileURLToPath(import.meta.url));
+const middlewareSource = readFileSync(resolve(testDir, "../../src/middleware.ts"), "utf8");
 
 describe("Clerk middleware route protection", () => {
   it("matches API routes then Clerk proxy routes without protecting v1 API Key routes", () => {

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { assertManager } from "@/lib/auth";
+import { requireTeamContext } from "@/lib/auth";
 import { getTunnelStatus } from "@/lib/tunnel/tunnelManager";
 import { getDownloadStatus } from "@/lib/tunnel/cloudflared";
 
 export async function GET() {
   try {
-    await assertManager();
+    await requireTeamContext();
     const [tunnel] = await Promise.all([getTunnelStatus()]);
     const download = getDownloadStatus();
     return NextResponse.json({ tunnel, download });

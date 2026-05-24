@@ -56,6 +56,8 @@ export default function DashboardHomeClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(null);
+  const [tunnel, setTunnel] = useState(null);
+  const [refreshingTunnel, setRefreshingTunnel] = useState(false);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -63,10 +65,9 @@ export default function DashboardHomeClient() {
     let mounted = true;
 
     async function loadManagerSummary() {
-      const [usageRes, teamRes, keysRes, poolRes, modelsRes] = await Promise.allSettled([
+      const [usageRes, teamRes, poolRes, modelsRes] = await Promise.allSettled([
         fetch("/api/usage/dashboard?period=7d"),
         fetch("/api/team/members"),
-        fetch("/api/keys"),
         fetch("/api/team/rtk-pool"),
         fetch("/api/models/browse"),
       ]);
@@ -76,9 +77,6 @@ export default function DashboardHomeClient() {
         : null;
       const team = teamRes.status === "fulfilled" && teamRes.value.ok
         ? await teamRes.value.json()
-        : null;
-      const keys = keysRes.status === "fulfilled" && keysRes.value.ok
-        ? await keysRes.value.json()
         : null;
       const pool = poolRes.status === "fulfilled" && poolRes.value.ok
         ? await poolRes.value.json()
@@ -91,24 +89,19 @@ export default function DashboardHomeClient() {
         role: "manager",
         usage: usage?.overview || null,
         members: team?.members || [],
-        keys: keys?.keys || [],
         pool: pool || null,
         models,
       };
     }
 
     async function loadDeveloperSummary() {
-      const [usageRes, keysRes, modelsRes] = await Promise.allSettled([
+      const [usageRes, modelsRes] = await Promise.allSettled([
         fetch("/api/usage/me?period=7d"),
-        fetch("/api/keys"),
         fetch("/api/models/browse"),
       ]);
 
       const usage = usageRes.status === "fulfilled" && usageRes.value.ok
         ? await usageRes.value.json()
-        : null;
-      const keys = keysRes.status === "fulfilled" && keysRes.value.ok
-        ? await keysRes.value.json()
         : null;
       const models = modelsRes.status === "fulfilled" && modelsRes.value.ok
         ? await modelsRes.value.json()
@@ -117,7 +110,6 @@ export default function DashboardHomeClient() {
       return {
         role: "developer",
         usage: usage?.overview || null,
-        keys: keys?.keys || [],
         models,
       };
     }
@@ -141,12 +133,35 @@ export default function DashboardHomeClient() {
     };
   }, [isLoaded, isManager, isDeveloper]);
 
+  async function refreshTunnelUrl() {
+    setRefreshingTunnel(true);
+    try {
+      const res = await fetch("/api/tunnel/enable", { method: "POST" });
+      const data = await res.json().catch(() => null);
+      if (data?.publicUrl) setTunnel(data);
+      else {
+        const statusRes = await fetch("/api/tunnel/status", { cache: "no-store" });
+        const status = await statusRes.json().catch(() => null);
+        if (status?.tunnel?.publicUrl) setTunnel(status.tunnel);
+      }
+    } finally {
+      setRefreshingTunnel(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!isLoaded) return;
+    fetch("/api/tunnel/status", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => setTunnel(data?.tunnel || null))
+      .catch(() => setTunnel(null));
+  }, [isLoaded]);
+
   const stats = useMemo(() => {
     if (!summary) return [];
 
     if (summary.role === "manager") {
       const activeMembers = summary.members.filter((m) => m.isActive).length;
-      const activeKeys = summary.keys.filter((k) => k.isActive).length;
       const providerCount = (summary.models?.providers || []).length;
       const comboCount = (summary.models?.combos || []).length;
 
@@ -170,15 +185,14 @@ export default function DashboardHomeClient() {
           icon: "groups",
         },
         {
-          label: "Active API Keys",
-          value: String(activeKeys),
+          label: "Routing Inventory",
+          value: String(providerCount + comboCount),
           hint: `${providerCount} providers, ${comboCount} combos`,
-          icon: "key",
+          icon: "hub",
         },
       ];
     }
 
-    const activeKeys = (summary.keys || []).filter((k) => k.isActive).length;
     const modelCount = (summary.models?.providers || []).reduce((acc, p) => acc + (p.models?.length || 0), 0);
 
     return [
@@ -195,10 +209,10 @@ export default function DashboardHomeClient() {
         icon: "payments",
       },
       {
-        label: "My Active Keys",
-        value: String(activeKeys),
-        hint: `${summary.keys.length} keys in account`,
-        icon: "vpn_key",
+        label: "CLI Config",
+        value: "Ready",
+        hint: "Copy tool snippets from portal",
+        icon: "terminal",
       },
       {
         label: "Available Models",
@@ -248,6 +262,26 @@ export default function DashboardHomeClient() {
         </div>
       ) : null}
 
+      <Card padding="md">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Router tunnel URL</p>
+            <p className="mt-2 truncate font-mono text-sm text-text-main">{tunnel?.publicUrl || "Not ready"}</p>
+            <p className="mt-1 text-xs text-text-muted">Use as router base URL for /v1/* requests.</p>
+          </div>
+          {isManager ? (
+            <button
+              type="button"
+              onClick={refreshTunnelUrl}
+              disabled={refreshingTunnel}
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-brand-600 px-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {refreshingTunnel ? "Refreshing..." : "Refresh URL"}
+            </button>
+          ) : null}
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <StatCard key={item.label} {...item} />
@@ -282,12 +316,6 @@ export default function DashboardHomeClient() {
               icon="bar_chart"
             />
             <QuickLink
-              href="/dashboard/keys"
-              title="API Key Overview"
-              desc="Audit key activity and revoke keys when needed."
-              icon="key"
-            />
-            <QuickLink
               href="/dashboard/quota"
               title="RTK Pool"
               desc="Top up or reset RTK savings capacity for streaming optimization."
@@ -296,12 +324,6 @@ export default function DashboardHomeClient() {
           </>
         ) : (
           <>
-            <QuickLink
-              href="/dashboard/keys"
-              title="My API Keys"
-              desc="Create, rotate, revoke, and copy your own API Keys."
-              icon="key"
-            />
             <QuickLink
               href="/dashboard/usage"
               title="My Usage"

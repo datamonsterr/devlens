@@ -19,7 +19,6 @@ const managerSections = [
       { href: "/dashboard", label: "Overview", icon: "insights" },
       { href: "/dashboard/usage", label: "Usage Analytics", icon: "query_stats" },
       { href: "/dashboard/team", label: "Team Members", icon: "supervisor_account" },
-      { href: "/dashboard/keys", label: "API Keys", icon: "vpn_key" },
     ],
   },
   {
@@ -107,13 +106,13 @@ NavLink.propTypes = {
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
   const { isManager, isDeveloper, isLoaded } = useRole();
-  const [showShutdownModal, setShowShutdownModal] = useState(false);
+  const [showStopModal, setShowStopModal] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [shutdownCountdown, setShutdownCountdown] = useState(0);
+  const [shutdownCountdown, setStopCountdown] = useState(0);
   const { copied, copy } = useCopyToClipboard(2000);
 
   const INSTALL_CMD = UPDATER_CONFIG.installCmdLatest;
@@ -142,7 +141,7 @@ export default function Sidebar({ onClose }) {
     setIsUpdating(true);
   };
 
-  const handleCopyAndShutdown = async () => {
+  const handleCopyAndStop = async () => {
     try {
       await navigator.clipboard.writeText(INSTALL_CMD);
     } catch {
@@ -151,11 +150,11 @@ export default function Sidebar({ onClose }) {
 
     copy(INSTALL_CMD);
     let remaining = UPDATER_CONFIG.shutdownCountdownSec;
-    setShutdownCountdown(remaining);
+    setStopCountdown(remaining);
 
     const timer = setInterval(() => {
       remaining -= 1;
-      setShutdownCountdown(remaining);
+      setStopCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(timer);
         fetch("/api/version/shutdown", { method: "POST" }).catch(() => {});
@@ -166,10 +165,10 @@ export default function Sidebar({ onClose }) {
 
   const handleCancelUpdate = () => {
     setIsUpdating(false);
-    setShutdownCountdown(0);
+    setStopCountdown(0);
   };
 
-  const handleShutdown = async () => {
+  const handleStop = async () => {
     setIsShuttingDown(true);
     try {
       await fetch("/api/version/shutdown", { method: "POST" });
@@ -177,11 +176,13 @@ export default function Sidebar({ onClose }) {
       // expected to fail during shutdown
     }
     setIsShuttingDown(false);
-    setShowShutdownModal(false);
+    setShowStopModal(false);
     setIsDisconnected(true);
   };
 
-  const visibleSections = isManager ? managerSections : isDeveloper ? developerSections : [];
+  const visibleSections = isManager
+    ? managerSections.map((section) => ({ ...section, items: section.items.filter((item) => item.label !== "API Keys") }))
+    : isDeveloper ? developerSections : [];
 
   return (
     <>
@@ -263,19 +264,19 @@ export default function Sidebar({ onClose }) {
               variant="outline"
               fullWidth
               icon="power_settings_new"
-              onClick={() => setShowShutdownModal(true)}
+              onClick={() => setShowStopModal(true)}
               className="border-red-200/80 text-red-500 hover:border-red-300 hover:bg-red-500/10"
             >
-              Shutdown
+              Stop
             </Button>
           </div>
         )}
       </aside>
 
       <ConfirmModal
-        isOpen={showShutdownModal}
-        onClose={() => setShowShutdownModal(false)}
-        onConfirm={handleShutdown}
+        isOpen={showStopModal}
+        onClose={() => setShowStopModal(false)}
+        onConfirm={handleStop}
         title="Close Proxy"
         message="Are you sure you want to close the proxy server?"
         confirmText="Close"
@@ -302,7 +303,7 @@ export default function Sidebar({ onClose }) {
               latestVersion={updateInfo?.latestVersion}
               installCmd={INSTALL_CMD}
               copied={copied}
-              onCopyAndShutdown={handleCopyAndShutdown}
+              onCopyAndStop={handleCopyAndStop}
               onCancel={handleCancelUpdate}
               countdown={shutdownCountdown}
               isDisconnected={isDisconnected}
@@ -333,7 +334,7 @@ function ManualUpdatePanel({
   latestVersion,
   installCmd,
   copied,
-  onCopyAndShutdown,
+  onCopyAndStop,
   onCancel,
   countdown,
   isDisconnected,
@@ -367,7 +368,7 @@ function ManualUpdatePanel({
 
       <ol className="mb-4 list-inside list-decimal space-y-1 text-xs text-white/70">
         <li>
-          Click <strong>Copy & Shutdown</strong> below.
+          Click <strong>Copy & Stop</strong> below.
         </li>
         <li>Paste the command into your terminal and press Enter.</li>
         <li>
@@ -384,12 +385,12 @@ function ManualUpdatePanel({
           <Button variant="secondary" onClick={onCancel} disabled={isCountingDown}>
             Cancel
           </Button>
-          <Button variant="primary" fullWidth onClick={onCopyAndShutdown} disabled={isCountingDown}>
+          <Button variant="primary" fullWidth onClick={onCopyAndStop} disabled={isCountingDown}>
             {copied
               ? "Copied - shutting down..."
               : isCountingDown
                 ? `Shutting down in ${countdown}s`
-                : "Copy & Shutdown"}
+                : "Copy & Stop"}
           </Button>
         </div>
       )}
@@ -401,7 +402,7 @@ ManualUpdatePanel.propTypes = {
   latestVersion: PropTypes.string,
   installCmd: PropTypes.string.isRequired,
   copied: PropTypes.bool,
-  onCopyAndShutdown: PropTypes.func.isRequired,
+  onCopyAndStop: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
   countdown: PropTypes.number,
   isDisconnected: PropTypes.bool,

@@ -81,7 +81,15 @@ async function initAdapter() {
       state.logged = true;
     }
     const { runMigrationOnce } = await import("./migrate.js");
-    await runMigrationOnce(adapter);
+    try {
+      await runMigrationOnce(adapter);
+    } catch (error) {
+      if (String(error?.message || "").includes("timed out waiting for Turso migration lock")) {
+        console.warn("[DB][migrate] Turso migration lock busy; using existing schema");
+      } else {
+        throw error;
+      }
+    }
     return adapter;
   }
   ensureDirs();

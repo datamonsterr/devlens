@@ -20,14 +20,15 @@
 - `/dashboard/usage`: role-filtered analytics.
 - `/dashboard/cli-config`: CLI Config Snippets (aliased to `/dashboard/cli-tools` with redirect).
 - `/dashboard/console-log`: role-filtered sanitized logs.
-- `/dashboard/endpoint`: Team cloudflared endpoint.
+- `/dashboard/endpoint`: Team API endpoint. Local deployments can expose Cloudflared endpoint; Vercel deployments use the deployed Vercel URL.
 - `/dashboard/profile`: profile/settings surface opened from HeaderMenu/account menu, not standalone sidebar module.
 
 ## Management API
 
 - `/api/team`: server-resolved Team context for signed-in Clerk Organization session.
-- `/api/tunnel/status`: signed-in Team context can read cloudflared tunnel status.
-- `/api/tunnel/enable`: Manager refreshes/enables cloudflared tunnel URL.
+- `/api/tunnel/status`: signed-in Team context can read endpoint status. On Vercel, returns deployed public endpoint and `unsupported: true` for quick tunnel process behavior; locally, returns Cloudflared tunnel status.
+- `/api/tunnel/enable`: Manager refreshes/enables local Cloudflared tunnel URL. On Vercel, returns unsupported result with deployed public endpoint and does not spawn `cloudflared`.
+- `/api/tunnel/disable`: Manager disables local Cloudflared tunnel. On Vercel, returns unsupported result with deployed public endpoint and does not stop `cloudflared`.
 
 ## Public status API
 

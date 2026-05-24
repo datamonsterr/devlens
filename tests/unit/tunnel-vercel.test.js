@@ -15,7 +15,7 @@ describe("tunnel Vercel behavior", () => {
     const cloudflared = await import("@/lib/tunnel/cloudflared.js");
     const spawnSpy = vi.spyOn(cloudflared, "spawnQuickTunnel");
 
-    const { getTunnelStatus, enableTunnel } = await import("@/lib/tunnel/tunnelManager.js");
+    const { getTunnelStatus, enableTunnel, disableTunnel } = await import("@/lib/tunnel/tunnelManager.js");
 
     await expect(getTunnelStatus()).resolves.toMatchObject({
       enabled: true,
@@ -29,7 +29,52 @@ describe("tunnel Vercel behavior", () => {
       unsupported: true,
       publicUrl: "https://devlens-preview.vercel.app",
     });
+    await expect(disableTunnel()).resolves.toMatchObject({
+      success: true,
+      unsupported: true,
+      publicUrl: "https://devlens-preview.vercel.app",
+    });
     expect(spawnSpy).not.toHaveBeenCalled();
+  });
+
+  it("prefers explicit Vercel endpoint and normalizes trailing slashes", async () => {
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("VERCEL_URL", "devlens-preview.vercel.app/");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "devlens-prod.vercel.app/");
+    vi.stubEnv("DEVLENS_PUBLIC_API_ENDPOINT", "https://api.devlens.example/");
+
+    const { getTunnelStatus, enableTunnel } = await import("@/lib/tunnel/tunnelManager.js");
+
+    await expect(getTunnelStatus()).resolves.toMatchObject({
+      enabled: true,
+      publicUrl: "https://api.devlens.example",
+      unsupported: true,
+      running: false,
+    });
+    await expect(enableTunnel()).resolves.toMatchObject({
+      success: false,
+      publicUrl: "https://api.devlens.example",
+      unsupported: true,
+    });
+  });
+
+  it("falls back through Vercel production and preview URLs", async () => {
+    vi.stubEnv("VERCEL", "1");
+    vi.stubEnv("VERCEL_URL", "devlens-preview.vercel.app/");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "devlens-prod.vercel.app/");
+
+    const { getTunnelStatus } = await import("@/lib/tunnel/tunnelManager.js");
+
+    await expect(getTunnelStatus()).resolves.toMatchObject({
+      publicUrl: "https://devlens-prod.vercel.app",
+    });
+
+    vi.resetModules();
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");
+    const fallback = await import("@/lib/tunnel/tunnelManager.js");
+    await expect(fallback.getTunnelStatus()).resolves.toMatchObject({
+      publicUrl: "https://devlens-preview.vercel.app",
+    });
   });
 
   it("preserves local tunnel status path outside Vercel", async () => {

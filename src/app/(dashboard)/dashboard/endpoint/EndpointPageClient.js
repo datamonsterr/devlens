@@ -81,6 +81,7 @@ export default function APIPageClient({ machineId }) {
   const [tunnelLoading, setTunnelLoading] = useState(false);
   const [tunnelProgress, setTunnelProgress] = useState("");
   const [tunnelStatus, setTunnelStatus] = useState(null);
+  const [isVercelEndpoint, setIsVercelEndpoint] = useState(false);
   const [showEnableTunnelModal, setShowEnableTunnelModal] = useState(false);
   const [showDisableTunnelModal, setShowDisableTunnelModal] = useState(false);
 
@@ -131,7 +132,11 @@ export default function APIPageClient({ machineId }) {
   useEffect(() => {
     const probeTunnel = async () => {
       if (document.hidden) return;
-      if (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) {
+      if (isVercelEndpoint) {
+        tunnelClientReachableRef.current = true;
+        setTunnelReachable(true);
+        if (!tunnelEverReachableRef.current) { tunnelEverReachableRef.current = true; setTunnelEverReachable(true); }
+      } else if (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) {
         const ok = await clientPingAny(tunnelPublicUrl, tunnelUrl);
         tunnelClientReachableRef.current = ok;
         if (ok) { tunnelMissRef.current = 0; setTunnelReachable(true); if (!tunnelEverReachableRef.current) { tunnelEverReachableRef.current = true; setTunnelEverReachable(true); } }
@@ -142,10 +147,10 @@ export default function APIPageClient({ machineId }) {
     };
     if (!(tunnelEnabled && (tunnelUrl || tunnelPublicUrl))) return;
     probeTunnel();
-    if (tunnelReachable) return;
+    if (tunnelReachable || isVercelEndpoint) return;
     const id = setInterval(probeTunnel, CLIENT_PING_FAST_MS);
     return () => clearInterval(id);
-  }, [tunnelEnabled, tunnelUrl, tunnelPublicUrl, tunnelReachable]);
+  }, [tunnelEnabled, tunnelUrl, tunnelPublicUrl, tunnelReachable, isVercelEndpoint]);
 
   // Client-side reachable only (server no longer probes; watchdog handles backend health).
   // Miss-debounce: only flip to false after N consecutive misses.
@@ -170,12 +175,21 @@ export default function APIPageClient({ machineId }) {
       const statusRes = await fetch("/api/tunnel/status", { cache: "no-store" });
       if (!statusRes.ok) return;
       const data = await statusRes.json();
+      const vercelMode = !!data.tunnel?.unsupported;
       const tEnabled = data.tunnel?.settingsEnabled ?? data.tunnel?.enabled ?? false;
-      const tUrl = data.tunnel?.tunnelUrl || "";
+      const tUrl = vercelMode ? "" : (data.tunnel?.tunnelUrl || "");
+      setIsVercelEndpoint(vercelMode);
       setTunnelUrl(tUrl);
       setTunnelPublicUrl(data.tunnel?.publicUrl || "");
-      setTunnelEnabled(tEnabled);
-      updateReachable(null, tunnelClientReachableRef, tunnelMissRef, setTunnelReachable, tunnelEverReachableRef, setTunnelEverReachable);
+      setTunnelEnabled(tEnabled || vercelMode);
+      if (vercelMode) {
+        tunnelClientReachableRef.current = true;
+        setTunnelReachable(true);
+        tunnelEverReachableRef.current = true;
+        setTunnelEverReachable(true);
+      } else {
+        updateReachable(null, tunnelClientReachableRef, tunnelMissRef, setTunnelReachable, tunnelEverReachableRef, setTunnelEverReachable);
+      }
     } catch { /* ignore poll errors */ }
   };
 
@@ -198,12 +212,21 @@ export default function APIPageClient({ machineId }) {
       }
       if (statusRes.ok) {
         const data = await statusRes.json();
+        const vercelMode = !!data.tunnel?.unsupported;
         const tEnabled = data.tunnel?.settingsEnabled ?? data.tunnel?.enabled ?? false;
-        const tUrl = data.tunnel?.tunnelUrl || "";
+        const tUrl = vercelMode ? "" : (data.tunnel?.tunnelUrl || "");
+        setIsVercelEndpoint(vercelMode);
         setTunnelUrl(tUrl);
         setTunnelPublicUrl(data.tunnel?.publicUrl || "");
-        setTunnelEnabled(tEnabled);
-        updateReachable(null, tunnelClientReachableRef, tunnelMissRef, setTunnelReachable, tunnelEverReachableRef, setTunnelEverReachable);
+        setTunnelEnabled(tEnabled || vercelMode);
+        if (vercelMode) {
+          tunnelClientReachableRef.current = true;
+          setTunnelReachable(true);
+          tunnelEverReachableRef.current = true;
+          setTunnelEverReachable(true);
+        } else {
+          updateReachable(null, tunnelClientReachableRef, tunnelMissRef, setTunnelReachable, tunnelEverReachableRef, setTunnelEverReachable);
+        }
       }
     } catch (error) {
       console.log("Error loading settings:", error);
@@ -495,7 +518,8 @@ export default function APIPageClient({ machineId }) {
     );
   }
 
-  const currentEndpoint = tunnelPublicUrl || tunnelUrl ? `${tunnelPublicUrl || tunnelUrl}/v1` : baseUrl;
+  const deployedEndpoint = isVercelEndpoint ? (tunnelPublicUrl || baseUrl.replace(/\/v1$/, "")) : "";
+  const currentEndpoint = deployedEndpoint ? `${deployedEndpoint}/v1` : (tunnelPublicUrl || tunnelUrl ? `${tunnelPublicUrl || tunnelUrl}/v1` : baseUrl);
 
   return (
     <div className="flex flex-col gap-8">
@@ -515,7 +539,7 @@ export default function APIPageClient({ machineId }) {
             >
               <span className="material-symbols-outlined text-[18px]">{copied === "api_endpoint" ? "check" : "content_copy"}</span>
             </button>
-            {isManager && tunnelEnabled && (
+            {isManager && tunnelEnabled && !isVercelEndpoint && (
               <button
                 onClick={() => setShowDisableTunnelModal(true)}
                 className="p-2 hover:bg-red-500/10 rounded text-red-500 transition-colors shrink-0"
@@ -524,7 +548,7 @@ export default function APIPageClient({ machineId }) {
                 <span className="material-symbols-outlined text-[18px]">power_settings_new</span>
               </button>
             )}
-            {isManager && !tunnelEnabled && !tunnelChecking && !tunnelLoading && (
+            {isManager && !isVercelEndpoint && !tunnelEnabled && !tunnelChecking && !tunnelLoading && (
               <Button
                 size="sm"
                 icon="cloud_upload"
@@ -544,7 +568,7 @@ export default function APIPageClient({ machineId }) {
               </Button>
             )}
           </div>
-          {isManager && (tunnelLoading || (tunnelEnabled && !tunnelReachable) || tunnelStatus?.type === "error" || tunnelChecking) && (
+          {isManager && !isVercelEndpoint && (tunnelLoading || (tunnelEnabled && !tunnelReachable) || tunnelStatus?.type === "error" || tunnelChecking) && (
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded border text-sm ${
               tunnelStatus?.type === "error"
                 ? "border-red-300 dark:border-red-800 bg-red-500/5 text-red-600 dark:text-red-400"
@@ -556,8 +580,14 @@ export default function APIPageClient({ machineId }) {
           )}
         </div>
 
+        {isVercelEndpoint && (
+          <div className="mt-4 rounded-lg border border-border bg-surface-2 p-4 text-sm text-text-muted">
+            Deployed Vercel endpoint active. Use this URL with your API Key for `/v1/*` requests.
+          </div>
+        )}
+
         {/* Pre-enable security gate banner */}
-        {isManager && isLoginUnsafe && !tunnelEnabled && (
+        {isManager && !isVercelEndpoint && isLoginUnsafe && !tunnelEnabled && (
           <div className="mt-4">
             <SecurityWarning
               message={unsafeReason}
@@ -567,7 +597,7 @@ export default function APIPageClient({ machineId }) {
         )}
 
         {/* Security warnings when tunnel is active */}
-        {isManager && tunnelEnabled && (
+        {isManager && tunnelEnabled && !isVercelEndpoint && (
           <div className="mt-4 flex flex-col gap-2">
             {!requireApiKey && (
               <SecurityWarning
@@ -592,7 +622,7 @@ export default function APIPageClient({ machineId }) {
         )}
 
         {/* Tunnel dashboard access option */}
-        {isManager && tunnelEnabled && (
+        {isManager && tunnelEnabled && !isVercelEndpoint && (
           <div className="mt-4 pt-4 border-t border-border flex items-center gap-3">
             <Toggle
               checked={tunnelDashboardAccess}

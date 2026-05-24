@@ -6,10 +6,14 @@ import { waitForHealth, probeUrlAlive } from "./networkProbe.js";
 const WORKER_URL = process.env.TUNNEL_WORKER_URL || "https://abc-tunnel.us";
 const IS_VERCEL = !!process.env.VERCEL;
 
+function normalizeEndpoint(url) {
+  return url.replace(/\/$/, "");
+}
+
 function vercelEndpoint() {
-  if (process.env.DEVLENS_PUBLIC_API_ENDPOINT) return process.env.DEVLENS_PUBLIC_API_ENDPOINT.replace(/\/$/, "");
-  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  if (process.env.DEVLENS_PUBLIC_API_ENDPOINT) return normalizeEndpoint(process.env.DEVLENS_PUBLIC_API_ENDPOINT);
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return normalizeEndpoint(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`);
+  if (process.env.VERCEL_URL) return normalizeEndpoint(`https://${process.env.VERCEL_URL}`);
   return "";
 }
 

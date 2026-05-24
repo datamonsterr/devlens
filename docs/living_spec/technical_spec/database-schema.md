@@ -30,15 +30,14 @@ Startup may apply schema migrations, but only schema migrations. Data migration 
 
 ## Turso migration coordination
 
-Target behavior: Vercel cold starts can happen concurrently against one Turso database, so Turso schema migration startup must coordinate with a Turso-backed migration lock:
+Vercel cold starts can happen concurrently against one Turso database, so Turso schema migration startup coordinates with a Turso-backed migration lock:
 
-- lock includes owner and expiry fields;
+- lock lives in `_migration_locks` and includes owner plus expiry fields;
 - one runner applies pending migrations;
-- concurrent runners wait and re-check schema version, skip when already migrated, or fail safely before serving DB-dependent requests;
+- concurrent runners wait for the lock and then re-check schema version through the normal migration path;
 - abandoned locks expire so later starts can proceed;
+- lock wait timeout fails safely before serving DB-dependent requests;
 - migration version update is guarded with migration step execution where libSQL supports it.
-
-Current implementation gap: `src/lib/db/migrate.js` runs versioned migrations and additive schema sync but does not yet implement Turso-backed migration locking. Treat this as change-needed before production Vercel use with concurrent cold starts.
 
 Unsupported SQLite pragmas must be ignored or handled in Turso mode without failing schema initialization.
 

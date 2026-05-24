@@ -36,8 +36,7 @@
 - [x] 5.1 Ensure `src/lib/db/migrate.js` can run versioned migrations against libSQL
 - [x] 5.2 Ensure additive schema sync works against Turso or add Turso-specific schema inspection where needed
 - [x] 5.3 Preserve `schemaVersion` semantics and monotonic migration ordering
-- [ ] 5.4 Add a Turso-backed migration lock or equivalent coordination so concurrent Vercel cold starts cannot race schema migrations
-  - Current implementation gap: `src/lib/db/migrate.js` has no lock/coordination path yet.
+- [x] 5.4 Add a Turso-backed migration lock or equivalent coordination so concurrent Vercel cold starts cannot race schema migrations
 - [x] 5.5 Add tests for Turso driver selection and migration invocation using a mock or local libSQL-compatible target
 - [x] 5.6 Confirm existing migrations `001`, `002`, and `003` remain idempotent against the new adapter
 

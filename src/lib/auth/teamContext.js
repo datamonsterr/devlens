@@ -1,6 +1,8 @@
 import { getAdapter } from "@/lib/db/driver";
 import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
+import { verifyDashboardAuthToken } from "./dashboardSession.js";
 
 function toTeamRole(orgRole, sessionClaims) {
   const metadataRole = sessionClaims?.public_metadata?.role || sessionClaims?.unsafe_metadata?.role;
@@ -54,9 +56,29 @@ async function ensureUser(adapter, clerkUserId, teamId, role) {
   return { id: userId, role, isActive: 1 };
 }
 
+async function getLocalDevContext() {
+  if (process.env.NODE_ENV !== "development" || process.env.DEVLENS_LOCAL_AUTH_FALLBACK === "false") return null;
+  const token = (await cookies()).get("auth_token")?.value;
+  if (!(await verifyDashboardAuthToken(token))) return null;
+
+  const adapter = await getAdapter();
+  const sessionClaims = { org_name: "Local Dev Team" };
+  const team = await ensureTeam(adapter, "local-dev", sessionClaims);
+  const user = await ensureUser(adapter, "local-dev-manager", team.id, "manager");
+  return {
+    teamId: team.id,
+    teamName: team.name,
+    clerkOrgId: team.clerkOrgId,
+    rtkPool: team.rtkPool,
+    userId: user.id,
+    role: user.role,
+    isActive: user.isActive === 1,
+  };
+}
+
 export async function getTeamContext() {
   const { userId, orgId, orgRole, sessionClaims } = await auth();
-  if (!userId || !orgId) return null;
+  if (!userId || !orgId) return getLocalDevContext();
   const memberships = sessionClaims?.orgs || sessionClaims?.organizations || null;
   if (Array.isArray(memberships) && memberships.length !== 1) return null;
 

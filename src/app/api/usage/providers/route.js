@@ -35,6 +35,7 @@ export async function GET() {
 
     return NextResponse.json({ providers });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("[API] Failed to get providers:", error);
     return NextResponse.json(
       { error: "Failed to fetch providers" },

@@ -326,8 +326,51 @@ function ProvidersContent() {
     compatibleProviders.length > 0 ||
     anthropicCompatibleProviders.length > 0;
 
+  const totalCatalogProviders =
+    oauthEntries.length +
+    freeEntries.length +
+    freeTierEntries.length +
+    apikeyEntries.length +
+    compatibleProviders.length +
+    anthropicCompatibleProviders.length;
+
+  const connectedCount = [...oauthEntries, ...freeEntries, ...freeTierEntries, ...apikeyEntries].reduce(
+    (acc, [providerId]) => {
+      const oauthStats = getProviderStats(providerId, "oauth");
+      const keyStats = getProviderStats(providerId, "apikey");
+      return acc + oauthStats.connected + keyStats.connected;
+    },
+    0,
+  );
+
   return (
     <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
+      <Card className="relative overflow-hidden" padding="lg" elev>
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_right_top,rgba(14,165,233,0.2),transparent_55%)]" />
+        <div className="relative flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Provider Management</h1>
+            <p className="mt-1 text-sm text-text-muted">
+              Manage Team Provider Connections, monitor connection health, and test routing readiness.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-surface/80 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-text-subtle">Catalog</p>
+              <p className="text-lg font-semibold">{totalCatalogProviders}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface/80 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-text-subtle">Connected</p>
+              <p className="text-lg font-semibold text-emerald-600 dark:text-emerald-300">{connectedCount}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-surface/80 px-3 py-2 col-span-2 sm:col-span-1">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-text-subtle">Search</p>
+              <p className="text-sm font-medium truncate">{searchQuery?.trim() ? `“${searchQuery.trim()}”` : "None"}</p>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {!hasAnyResult && (
         <div className="text-center py-8 border border-dashed border-border rounded-xl">
           <span className="material-symbols-outlined text-[32px] text-text-muted mb-2">
@@ -338,7 +381,7 @@ function ProvidersContent() {
       )}
 
       {/* Custom Providers (OpenAI/Anthropic Compatible) — dynamic */}
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle/80 bg-surface/35 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 leading-tight">
             Custom Providers (OpenAI/Anthropic Compatible){" "}
@@ -358,7 +401,7 @@ function ProvidersContent() {
               variant="secondary"
               icon="add"
               onClick={() => setShowAddCompatibleModal(true)}
-              className="w-full !bg-white !text-black hover:!bg-gray-100 sm:w-auto"
+              className="w-full sm:w-auto"
             >
               Add OpenAI Compatible
             </Button>
@@ -393,7 +436,7 @@ function ProvidersContent() {
 
       {/* OAuth Providers */}
       {oauthEntries.length > 0 && (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle/80 bg-surface/35 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 leading-tight">
             OAuth Providers
@@ -437,7 +480,7 @@ function ProvidersContent() {
 
       {/* Free Tier Providers */}
       {(freeEntries.length > 0 || freeTierEntries.length > 0) && (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle/80 bg-surface/35 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 leading-tight">
             Free Tier Providers
@@ -488,7 +531,7 @@ function ProvidersContent() {
 
       {/* API Key Providers — fixed list */}
       {apikeyEntries.length > 0 && (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle/80 bg-surface/35 p-4 sm:p-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2 leading-tight">
             API Key Providers{" "}

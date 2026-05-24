@@ -1,11 +1,19 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Card, CardSkeleton, Button, Badge, SegmentedControl } from "@/shared/components";
+import { Card, CardSkeleton, Button, SegmentedControl } from "@/shared/components";
 import { useRole } from "@/shared/hooks/useRole";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 const PERIODS = [
@@ -14,16 +22,16 @@ const PERIODS = [
   { value: "this-month", label: "This Month" },
 ];
 
-const COLORS = ["#3b82f6", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#14b8a6", "#f97316"];
+const COLORS = ["#0284c7", "#06b6d4", "#0ea5e9", "#14b8a6", "#22c55e", "#eab308", "#f97316", "#ef4444"];
 
 function formatTokens(n) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
-  return String(n);
+  return String(n || 0);
 }
 
 function formatCost(n) {
-  return `$${Number(n).toFixed(4)}`;
+  return `$${Number(n || 0).toFixed(4)}`;
 }
 
 function exportCSV(data) {
@@ -37,6 +45,26 @@ function exportCSV(data) {
   a.download = `devlens-usage-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function MetricCard({ label, value, hint, tone = "default" }) {
+  const toneClass = {
+    default: "text-text-main",
+    success: "text-emerald-600 dark:text-emerald-300",
+    warning: "text-amber-600 dark:text-amber-300",
+  }[tone];
+
+  return (
+    <Card padding="md" className="h-full">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">{label}</p>
+      <p className={`mt-2 text-2xl font-semibold ${toneClass}`}>{value}</p>
+      <p className="mt-1 text-xs text-text-muted">{hint}</p>
+    </Card>
+  );
+}
+
+function EmptyChart({ message }) {
+  return <div className="flex h-64 items-center justify-center text-sm text-text-muted">{message}</div>;
 }
 
 export default function UsageDashboardPage() {
@@ -77,7 +105,7 @@ export default function UsageDashboardPage() {
 
   if (loading && !data) {
     return (
-      <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
+      <div className="flex min-w-0 flex-col gap-4 px-1 sm:px-0">
         <CardSkeleton />
         <CardSkeleton />
         <CardSkeleton />
@@ -93,19 +121,17 @@ export default function UsageDashboardPage() {
 
   return (
     <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
-      {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">{isManager ? "Usage Dashboard" : "My Usage"}</h1>
-          <p className="text-sm text-text-muted mt-1">{isManager ? "Team-wide analytics and cost tracking" : "Personal usage and cost tracking"}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{isManager ? "Team Usage Analytics" : "My Usage Analytics"}</h1>
+          <p className="mt-1 text-sm text-text-muted">
+            {isManager
+              ? "Team-level request volume, cost distribution, and Developer trends"
+              : "Your personal request volume, costs, and token usage trends"}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <SegmentedControl
-            options={PERIODS}
-            value={period}
-            onChange={setPeriod}
-            size="sm"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <SegmentedControl options={PERIODS} value={period} onChange={setPeriod} size="sm" />
           <Button variant="secondary" size="sm" icon="refresh" onClick={fetchData}>
             Refresh
           </Button>
@@ -116,44 +142,39 @@ export default function UsageDashboardPage() {
       </div>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/70 dark:bg-red-950/60 dark:text-red-300">
           {error}
         </div>
       )}
 
-      {/* Aggregate Cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card padding="md" className="text-center">
-          <p className="text-xs text-text-muted uppercase tracking-wide">Total Tokens</p>
-          <p className="text-2xl font-bold mt-1">{formatTokens(overview?.totalTokens || 0)}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            {overview?.totalRequests || 0} requests
-          </p>
-        </Card>
-        <Card padding="md" className="text-center">
-          <p className="text-xs text-text-muted uppercase tracking-wide">Total Cost</p>
-          <p className="text-2xl font-bold mt-1">{formatCost(overview?.totalCost || 0)}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            ~${((overview?.totalCost || 0) / Math.max(overview?.totalRequests || 1, 1)).toFixed(6)}/req
-          </p>
-        </Card>
-        <Card padding="md" className="text-center">
-          <p className="text-xs text-text-muted uppercase tracking-wide">Active Devs</p>
-          <p className="text-2xl font-bold mt-1">{overview?.activeDevelopers || 0}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">developers</p>
-        </Card>
-        <Card padding="md" className="text-center">
-          <p className="text-xs text-text-muted uppercase tracking-wide">RTK Saved</p>
-          <p className="text-2xl font-bold mt-1">{formatTokens(overview?.totalRtkSaved || 0)}</p>
-          <p className="text-[11px] text-text-muted mt-0.5">tokens saved</p>
-        </Card>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <MetricCard
+          label="Total Tokens"
+          value={formatTokens(overview?.totalTokens || 0)}
+          hint={`${overview?.totalRequests || 0} requests`}
+        />
+        <MetricCard
+          label="Total Cost"
+          value={formatCost(overview?.totalCost || 0)}
+          hint={`~$${((overview?.totalCost || 0) / Math.max(overview?.totalRequests || 1, 1)).toFixed(6)} per request`}
+        />
+        <MetricCard
+          label={isManager ? "Active Developers" : "Active Days"}
+          value={String(overview?.activeDevelopers || 0)}
+          hint={isManager ? "Developers with recent requests" : "Days with request activity"}
+          tone="warning"
+        />
+        <MetricCard
+          label="RTK Saved"
+          value={formatTokens(overview?.totalRtkSaved || 0)}
+          hint="Saved output tokens"
+          tone="success"
+        />
       </div>
 
-      {/* Charts Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Time-series chart */}
         <Card padding="md">
-          <h3 className="font-semibold mb-3">Token Consumption</h3>
+          <h3 className="mb-3 text-sm font-semibold">Token Consumption</h3>
           {chartData.length > 0 ? (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -162,20 +183,17 @@ export default function UsageDashboardPage() {
                   <XAxis dataKey="label" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={formatTokens} />
                   <Tooltip formatter={(v) => [formatTokens(v), "Tokens"]} />
-                  <Bar dataKey="tokens" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="tokens" fill="#0284c7" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-text-muted text-sm">
-              No data for this period
-            </div>
+            <EmptyChart message="No data for this period" />
           )}
         </Card>
 
-        {/* Model cost distribution */}
         <Card padding="md">
-          <h3 className="font-semibold mb-3">Cost by Model</h3>
+          <h3 className="mb-3 text-sm font-semibold">Cost by Model</h3>
           {models.length > 0 ? (
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -186,8 +204,8 @@ export default function UsageDashboardPage() {
                     nameKey="model"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    label={({ model }) => model?.length > 15 ? `${model.slice(0, 15)}...` : model}
+                    outerRadius={84}
+                    label={({ model }) => (model?.length > 15 ? `${model.slice(0, 15)}...` : model)}
                   >
                     {models.slice(0, 8).map((_, i) => (
                       <Cell key={i} fill={COLORS[i % COLORS.length]} />
@@ -198,32 +216,28 @@ export default function UsageDashboardPage() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="h-64 flex items-center justify-center text-text-muted text-sm">
-              No data for this period
-            </div>
+            <EmptyChart message="No model cost data for this period" />
           )}
         </Card>
       </div>
 
-      {/* Tables Row */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Provider volume table */}
         <Card padding="md">
-          <h3 className="font-semibold mb-3">Provider Volume</h3>
+          <h3 className="mb-3 text-sm font-semibold">Provider Volume</h3>
           {providers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-subtle">
+                  <tr className="border-b border-border-subtle text-left text-text-muted">
                     <th className="pb-2 font-medium">Provider</th>
-                    <th className="pb-2 font-medium text-right">Requests</th>
-                    <th className="pb-2 font-medium text-right">Tokens</th>
-                    <th className="pb-2 font-medium text-right">Cost</th>
+                    <th className="pb-2 text-right font-medium">Requests</th>
+                    <th className="pb-2 text-right font-medium">Tokens</th>
+                    <th className="pb-2 text-right font-medium">Cost</th>
                   </tr>
                 </thead>
                 <tbody>
                   {providers.map((p) => (
-                    <tr key={p.provider} className="border-b border-border-subtle/50">
+                    <tr key={p.provider} className="border-b border-border-subtle/60">
                       <td className="py-2 font-mono text-xs">{p.provider}</td>
                       <td className="py-2 text-right">{p.requests}</td>
                       <td className="py-2 text-right font-mono text-xs">{formatTokens(p.totalTokens)}</td>
@@ -234,36 +248,39 @@ export default function UsageDashboardPage() {
               </table>
             </div>
           ) : (
-            <p className="text-text-muted text-sm py-8 text-center">No provider data</p>
+            <p className="py-8 text-center text-sm text-text-muted">No provider data</p>
           )}
         </Card>
 
-        {/* Per-developer breakdown */}
         <Card padding="md">
-          <h3 className="font-semibold mb-3">Developer Breakdown</h3>
+          <h3 className="mb-3 text-sm font-semibold">{isManager ? "Developer Breakdown" : "Request Breakdown"}</h3>
           {developers.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-text-muted border-b border-border-subtle">
+                  <tr className="border-b border-border-subtle text-left text-text-muted">
                     <th className="pb-2 font-medium">Developer</th>
-                    <th className="pb-2 font-medium text-right">Requests</th>
-                    <th className="pb-2 font-medium text-right">Tokens</th>
-                    <th className="pb-2 font-medium text-right">Cost</th>
-                    <th className="pb-2 font-medium text-right">RTK Saved</th>
+                    <th className="pb-2 text-right font-medium">Requests</th>
+                    <th className="pb-2 text-right font-medium">Tokens</th>
+                    <th className="pb-2 text-right font-medium">Cost</th>
+                    <th className="pb-2 text-right font-medium">RTK Saved</th>
                   </tr>
                 </thead>
                 <tbody>
                   {developers.map((d) => (
-                    <tr key={d.userId || d.clerkUserId} className="border-b border-border-subtle/50">
+                    <tr key={d.userId || d.clerkUserId} className="border-b border-border-subtle/60">
                       <td className="py-2 font-mono text-xs">
-                        {d.clerkUserId ? d.clerkUserId.slice(0, 12) + "..." : d.userId?.slice(0, 12) + "..." || "Unknown"}
+                        {d.clerkUserId
+                          ? `${d.clerkUserId.slice(0, 12)}...`
+                          : d.userId
+                            ? `${d.userId.slice(0, 12)}...`
+                            : "Unknown"}
                       </td>
                       <td className="py-2 text-right">{d.requests}</td>
                       <td className="py-2 text-right font-mono text-xs">{formatTokens(d.totalTokens)}</td>
                       <td className="py-2 text-right font-mono text-xs">{formatCost(d.cost)}</td>
-                      <td className="py-2 text-right font-mono text-xs">
-                        <span className="text-green-600">{formatTokens(d.rtkTokensSaved)}</span>
+                      <td className="py-2 text-right font-mono text-xs text-emerald-600 dark:text-emerald-300">
+                        {formatTokens(d.rtkTokensSaved)}
                       </td>
                     </tr>
                   ))}
@@ -271,32 +288,31 @@ export default function UsageDashboardPage() {
               </table>
             </div>
           ) : (
-            <p className="text-text-muted text-sm py-8 text-center">No developer data</p>
+            <p className="py-8 text-center text-sm text-text-muted">No developer data</p>
           )}
         </Card>
       </div>
 
-      {/* Model Cost Table */}
       {models.length > 0 && (
         <Card padding="md">
-          <h3 className="font-semibold mb-3">Model Cost Detail</h3>
+          <h3 className="mb-3 text-sm font-semibold">Model Cost Details</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-text-muted border-b border-border-subtle">
+                <tr className="border-b border-border-subtle text-left text-text-muted">
                   <th className="pb-2 font-medium">Model</th>
                   <th className="pb-2 font-medium">Provider</th>
-                  <th className="pb-2 font-medium text-right">Requests</th>
-                  <th className="pb-2 font-medium text-right">Prompt Tokens</th>
-                  <th className="pb-2 font-medium text-right">Completion Tokens</th>
-                  <th className="pb-2 font-medium text-right">Total Tokens</th>
-                  <th className="pb-2 font-medium text-right">Cost</th>
+                  <th className="pb-2 text-right font-medium">Requests</th>
+                  <th className="pb-2 text-right font-medium">Prompt</th>
+                  <th className="pb-2 text-right font-medium">Completion</th>
+                  <th className="pb-2 text-right font-medium">Total</th>
+                  <th className="pb-2 text-right font-medium">Cost</th>
                 </tr>
               </thead>
               <tbody>
                 {models.map((m, i) => (
-                  <tr key={`${m.provider}-${m.model}-${i}`} className="border-b border-border-subtle/50">
-                    <td className="py-2 font-mono text-xs max-w-[160px] truncate">{m.model}</td>
+                  <tr key={`${m.provider}-${m.model}-${i}`} className="border-b border-border-subtle/60">
+                    <td className="max-w-[180px] truncate py-2 font-mono text-xs">{m.model}</td>
                     <td className="py-2 text-xs text-text-muted">{m.provider}</td>
                     <td className="py-2 text-right">{m.requests}</td>
                     <td className="py-2 text-right font-mono text-xs">{formatTokens(m.promptTokens)}</td>

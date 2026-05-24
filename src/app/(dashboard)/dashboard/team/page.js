@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card } from "@/shared/components";
+import { Button, Card, Input, Badge } from "@/shared/components";
 import RoleGuard from "@/shared/components/RoleGuard";
 
 export default function TeamPage() {
@@ -51,13 +51,32 @@ function TeamContent() {
   return (
     <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
       <div>
-        <h1 className="text-2xl font-semibold">Team Management</h1>
-        <p className="text-sm text-text-muted mt-1">Invite developers, inspect API key metadata, and deactivate access.</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Team Management</h1>
+        <p className="mt-1 text-sm text-text-muted">Invite Developers, monitor status, and deactivate access when needed.</p>
       </div>
-      {error && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
-      {notice && <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-600">{notice}</div>}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card padding="md">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Members</p>
+          <p className="mt-2 text-2xl font-semibold">{members.length}</p>
+          <p className="text-xs text-text-muted">Team records</p>
+        </Card>
+        <Card padding="md">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Active</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-300">{members.filter((m) => m.isActive).length}</p>
+          <p className="text-xs text-text-muted">Current access</p>
+        </Card>
+        <Card padding="md">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Inactive</p>
+          <p className="mt-2 text-2xl font-semibold text-rose-600 dark:text-rose-300">{members.filter((m) => !m.isActive).length}</p>
+          <p className="text-xs text-text-muted">Removed users</p>
+        </Card>
+      </div>
+
+      {error && <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/70 dark:bg-red-950/60 dark:text-red-300">{error}</div>}
+      {notice && <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-600 dark:border-green-900/70 dark:bg-green-950/60 dark:text-green-300">{notice}</div>}
       {newKey?.key && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950">
           <div className="flex items-start gap-2">
             <span className="material-symbols-outlined text-amber-600 text-[20px] shrink-0 mt-0.5">key</span>
             <div>
@@ -74,27 +93,54 @@ function TeamContent() {
           </div>
         </div>
       )}
-      <Card>
-        <div className="flex gap-2">
-          <input className="flex-1 rounded border border-border bg-bg px-3 py-2" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="developer@example.com" />
-          <Button onClick={invite}>Invite developer</Button>
+
+      <Card padding="md">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            className="flex-1"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="developer@example.com"
+            icon="mail"
+          />
+          <Button onClick={invite} className="w-full sm:w-auto">Invite Developer</Button>
         </div>
       </Card>
-      <Card>
+
+      <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead><tr className="text-left text-text-muted"><th className="py-2">Developer</th><th>Role</th><th>Status</th><th>Invite</th><th>API Keys</th><th>Assigned Key</th><th>Last Used</th><th /></tr></thead>
+            <thead className="bg-surface-2/70">
+              <tr className="text-left text-text-muted">
+                <th className="px-4 py-3 font-medium">Developer</th>
+                <th className="px-4 py-3 font-medium">Role</th>
+                <th className="px-4 py-3 font-medium">Status</th>
+                <th className="px-4 py-3 font-medium">Invite</th>
+                <th className="px-4 py-3 font-medium">API Keys</th>
+                <th className="px-4 py-3 font-medium">Assigned Key</th>
+                <th className="px-4 py-3 font-medium">Last Used</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
             <tbody>
               {members.map((m) => (
-                <tr key={m.id} className="border-t border-border">
-                  <td className="py-3 font-mono text-xs">{m.email || m.clerkUserId || m.id}</td>
-                  <td>{m.role}</td>
-                  <td>{m.isActive ? "active" : "inactive"}</td>
-                  <td className="text-xs">{m.inviteStatus || (m.clerkUserId ? "joined" : "—")}</td>
-                  <td>{m.activeApiKeyCount || 0}/{m.apiKeyCount || 0}</td>
-                  <td className="text-xs font-mono">{m.assignedApiKeyId ? (m.assignedApiKeyId.slice(0, 12) + "...") : (m.apiKeyCount > 0 ? "Yes" : "—")}</td>
-                  <td>{m.lastKeyUsedAt || "never"}</td>
-                  <td className="text-right"><Button variant="danger" size="sm" onClick={() => deactivate(m.id)}>Deactivate</Button></td>
+                <tr key={m.id} className="border-t border-border-subtle/80">
+                  <td className="px-4 py-3 font-mono text-xs">{m.email || m.clerkUserId || m.id}</td>
+                  <td className="px-4 py-3">{m.role}</td>
+                  <td className="px-4 py-3">
+                    {m.isActive ? (
+                      <Badge variant="success" size="sm" dot>Active</Badge>
+                    ) : (
+                      <Badge variant="error" size="sm" dot>Inactive</Badge>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs text-text-muted">{m.inviteStatus || (m.clerkUserId ? "joined" : "—")}</td>
+                  <td className="px-4 py-3">{m.activeApiKeyCount || 0}/{m.apiKeyCount || 0}</td>
+                  <td className="px-4 py-3 text-xs font-mono text-text-muted">{m.assignedApiKeyId ? (m.assignedApiKeyId.slice(0, 12) + "...") : (m.apiKeyCount > 0 ? "Yes" : "—")}</td>
+                  <td className="px-4 py-3 text-xs text-text-muted">{m.lastKeyUsedAt || "never"}</td>
+                  <td className="px-4 py-3 text-right">
+                    <Button variant="danger" size="sm" onClick={() => deactivate(m.id)}>Deactivate</Button>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -7,79 +7,132 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/shared/utils/cn";
 import { useRole } from "@/shared/hooks/useRole";
 import { APP_CONFIG, UPDATER_CONFIG } from "@/shared/constants/config";
-import { MEDIA_PROVIDER_KINDS } from "@/shared/constants/providers";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import Button from "./Button";
 import { ConfirmModal } from "./Modal";
 
-// const VISIBLE_MEDIA_KINDS = ["embedding", "image", "imageToText", "tts", "stt", "webSearch", "webFetch", "video", "music"];
-const VISIBLE_MEDIA_KINDS = ["embedding", "image", "tts", "stt"];
-// Combined entry: webSearch + webFetch share one page at /dashboard/media-providers/web
-const COMBINED_WEB_ITEM = { id: "web", label: "Web Fetch & Search", icon: "travel_explore", href: "/dashboard/media-providers/web" };
-
-const managerSharedItems = [
-  { href: "/dashboard/endpoint", label: "Endpoint", icon: "api" },
-  { href: "/dashboard/keys", label: "API Keys", icon: "key" },
+const managerSections = [
+  {
+    id: "manager-core",
+    title: "Manager Portal",
+    items: [
+      { href: "/dashboard", label: "Overview", icon: "insights" },
+      { href: "/dashboard/usage", label: "Usage Analytics", icon: "query_stats" },
+      { href: "/dashboard/team", label: "Team Members", icon: "supervisor_account" },
+      { href: "/dashboard/keys", label: "API Keys", icon: "vpn_key" },
+    ],
+  },
+  {
+    id: "manager-config",
+    title: "Infrastructure",
+    items: [
+      { href: "/dashboard/providers", label: "Provider Connections", icon: "lan" },
+      { href: "/dashboard/models", label: "Model Browser", icon: "view_in_ar" },
+      { href: "/dashboard/combos", label: "Combos", icon: "account_tree" },
+      { href: "/dashboard/pricing", label: "Pricing Overrides", icon: "price_change" },
+      { href: "/dashboard/quota", label: "RTK Pool", icon: "savings" },
+    ],
+  },
+  {
+    id: "manager-access",
+    title: "Access & Docs",
+    items: [
+      { href: "/dashboard/endpoint", label: "API Quickstart", icon: "play_circle" },
+      { href: "/dashboard/cli-tools", label: "CLI Config", icon: "code_blocks" },
+      { href: "/dashboard/console-log", label: "Console Log", icon: "receipt_long" },
+      { href: "/dashboard/profile", label: "Settings", icon: "tune" },
+    ],
+  },
 ];
 
-const managerItems = [
-  { href: "/dashboard/usage", label: "Overview", icon: "bar_chart" },
-  { href: "/dashboard/team", label: "Team", icon: "groups" },
-  { href: "/dashboard/providers", label: "Providers", icon: "dns" },
-  { href: "/dashboard/combos", label: "Combos", icon: "layers" },
-  { href: "/dashboard/quota", label: "RTK Pool", icon: "data_usage" },
-  { href: "/dashboard/pricing", label: "Pricing", icon: "sell" },
+const developerSections = [
+  {
+    id: "developer-core",
+    title: "Developer Portal",
+    items: [
+      { href: "/dashboard", label: "Overview", icon: "home_storage" },
+      { href: "/dashboard/keys", label: "My API Keys", icon: "key_vertical" },
+      { href: "/dashboard/usage", label: "My Usage", icon: "monitoring" },
+      { href: "/dashboard/models", label: "Available Models", icon: "dataset" },
+      { href: "/dashboard/combos", label: "Combos", icon: "fork_right" },
+    ],
+  },
+  {
+    id: "developer-tools",
+    title: "API & Tooling",
+    items: [
+      { href: "/dashboard/endpoint", label: "API Quickstart", icon: "bolt" },
+      { href: "/dashboard/cli-tools", label: "CLI Config", icon: "terminal" },
+      { href: "/dashboard/console-log", label: "Console Log", icon: "subject" },
+      { href: "/dashboard/profile", label: "Account", icon: "manage_accounts" },
+    ],
+  },
 ];
 
-const developerItems = [
-  { href: "/dashboard/endpoint", label: "Endpoint", icon: "api" },
-  { href: "/dashboard/keys", label: "API Keys", icon: "key" },
-  { href: "/dashboard/combos", label: "Combos", icon: "layers" },
-  { href: "/dashboard/models", label: "Models", icon: "hub" },
-  { href: "/dashboard/usage", label: "Usage", icon: "bar_chart" },
-  { href: "/dashboard/keys", label: "CLI Config", icon: "terminal" },
-  { href: "/dashboard/console-log", label: "Console Log", icon: "terminal" },
-  { href: "/dashboard/profile", label: "Account", icon: "account_circle" },
-];
+function NavLink({ item, active, onClose }) {
+  return (
+    <Link
+      href={item.href}
+      onClick={onClose}
+      className={cn(
+        "group flex items-center gap-3 rounded-xl px-3 py-2 transition-all",
+        active
+          ? "bg-brand-500/12 text-brand-700 dark:text-brand-200"
+          : "text-text-muted hover:bg-surface-2/70 hover:text-text-main",
+      )}
+    >
+      <span
+        className={cn(
+          "material-symbols-outlined text-[18px]",
+          active ? "fill-1" : "group-hover:text-brand-600 dark:group-hover:text-brand-300",
+        )}
+      >
+        {item.icon}
+      </span>
+      <span className="text-[13px] font-medium">{item.label}</span>
+    </Link>
+  );
+}
 
-const debugItems = [
-  { href: "/dashboard/translator", label: "Translator", icon: "translate" },
-];
-
-const systemItems = [
-  { href: "/dashboard/skills", label: "Skills", icon: "extension" },
-];
+NavLink.propTypes = {
+  item: PropTypes.shape({
+    href: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    icon: PropTypes.string.isRequired,
+  }).isRequired,
+  active: PropTypes.bool.isRequired,
+  onClose: PropTypes.func,
+};
 
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
-  const { isManager, isDeveloper } = useRole();
-  const [mediaOpen, setMediaOpen] = useState(false);
+  const { isManager, isDeveloper, isLoaded } = useRole();
+  const [showShutdownModal, setShowShutdownModal] = useState(false);
+  const [isShuttingDown, setIsShuttingDown] = useState(false);
+  const [isDisconnected, setIsDisconnected] = useState(false);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [enableTranslator, setEnableTranslator] = useState(false);
+  const [shutdownCountdown, setShutdownCountdown] = useState(0);
   const { copied, copy } = useCopyToClipboard(2000);
 
   const INSTALL_CMD = UPDATER_CONFIG.installCmdLatest;
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => { if (data.enableTranslator) setEnableTranslator(true); })
-      .catch(() => {});
-  }, []);
-
-  // Lazy check for new npm version on mount
-  useEffect(() => {
     fetch("/api/version")
-      .then(res => res.json())
-      .then(data => { if (data.hasUpdate) setUpdateInfo(data); })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.hasUpdate) setUpdateInfo(data);
+      })
       .catch(() => {});
   }, []);
 
   const isActive = (href) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
     if (href === "/dashboard/endpoint") {
-      return pathname === "/dashboard" || pathname.startsWith("/dashboard/endpoint");
+      return pathname.startsWith("/dashboard/endpoint");
     }
     return pathname.startsWith(href);
   };
@@ -89,56 +142,85 @@ export default function Sidebar({ onClose }) {
     setIsUpdating(true);
   };
 
-  const handleCopyUpdateCommand = () => {
+  const handleCopyAndShutdown = async () => {
+    try {
+      await navigator.clipboard.writeText(INSTALL_CMD);
+    } catch {
+      // clipboard access may fail in restricted browsers
+    }
+
     copy(INSTALL_CMD);
+    let remaining = UPDATER_CONFIG.shutdownCountdownSec;
+    setShutdownCountdown(remaining);
+
+    const timer = setInterval(() => {
+      remaining -= 1;
+      setShutdownCountdown(remaining);
+      if (remaining <= 0) {
+        clearInterval(timer);
+        fetch("/api/version/shutdown", { method: "POST" }).catch(() => {});
+        setIsDisconnected(true);
+      }
+    }, 1000);
   };
 
   const handleCancelUpdate = () => {
     setIsUpdating(false);
+    setShutdownCountdown(0);
   };
+
+  const handleShutdown = async () => {
+    setIsShuttingDown(true);
+    try {
+      await fetch("/api/version/shutdown", { method: "POST" });
+    } catch {
+      // expected to fail during shutdown
+    }
+    setIsShuttingDown(false);
+    setShowShutdownModal(false);
+    setIsDisconnected(true);
+  };
+
+  const visibleSections = isManager ? managerSections : isDeveloper ? developerSections : [];
 
   return (
     <>
-      <aside className="flex w-72 flex-col border-r border-border-subtle bg-vibrancy backdrop-blur-xl transition-colors duration-300 min-h-full">
-        {/* Traffic lights */}
-        <div className="flex items-center gap-2 px-6 pt-5 pb-2">
-          <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-          <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-          <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-        </div>
-
-        {/* Logo */}
-        <div className="px-6 py-4 flex flex-col gap-2">
+      <aside className="flex min-h-full w-[286px] flex-col border-r border-border-subtle/80 bg-sidebar/80 backdrop-blur-xl">
+        <div className="border-b border-border-subtle/70 px-5 pb-4 pt-5">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex items-center justify-center size-9 rounded-[10px] bg-gradient-to-br from-brand-500 to-brand-700 shadow-[var(--shadow-warm)]">
-              <span className="material-symbols-outlined text-white text-[20px]">hub</span>
+            <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-[var(--shadow-warm)]">
+              <span className="material-symbols-outlined text-[20px]">deployed_code</span>
             </div>
-            <div className="flex flex-col">
-              <h1 className="text-lg font-semibold tracking-tight text-text-main">
-                {APP_CONFIG.name}
-              </h1>
-              <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
+            <div className="min-w-0">
+              <p className="truncate text-[15px] font-semibold tracking-tight text-text-main">{APP_CONFIG.name}</p>
+              <p className="text-[11px] text-text-muted">v{APP_CONFIG.version}</p>
             </div>
           </Link>
+
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-text-muted">
+            <span className="material-symbols-outlined text-[12px]">verified_user</span>
+            {isManager ? "Manager" : isDeveloper ? "Developer" : "Loading role"}
+          </div>
+
           {updateInfo && (
-            <div className="flex flex-col gap-1.5 rounded p-1 -m-1">
-              <span className="text-xs font-semibold text-green-600 dark:text-indigo-500">
-                ↑ New version available: v{updateInfo.latestVersion}
-              </span>
-              <div className="flex items-center gap-2">
+            <div className="mt-3 rounded-xl border border-emerald-500/25 bg-emerald-500/8 px-3 py-2.5">
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                Update available: v{updateInfo.latestVersion}
+              </p>
+              <div className="mt-2 flex items-center gap-2">
                 <button
                   onClick={() => setShowUpdateModal(true)}
-                  className="px-2 py-1 rounded bg-green-600 hover:bg-green-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white text-[11px] font-semibold transition-colors cursor-pointer"
+                  className="rounded-md bg-emerald-600 px-2.5 py-1 text-[11px] font-semibold text-white transition-colors hover:bg-emerald-700"
                 >
-                  Update now
+                  Update
                 </button>
                 <button
                   onClick={() => copy(INSTALL_CMD)}
                   title="Copy install command"
-                  className="flex-1 text-left hover:opacity-80 transition-opacity cursor-pointer min-w-0"
+                  className="min-w-0 flex-1 text-left"
                 >
-                  <code className="block text-[10px] text-green-600/80 dark:text-indigo-400/70 font-mono truncate">
-                    {copied ? "✓ copied!" : INSTALL_CMD}
+                  <code className="block truncate text-[10px] text-emerald-700/80 dark:text-emerald-300/90">
+                    {copied ? "Copied install command" : INSTALL_CMD}
                   </code>
                 </button>
               </div>
@@ -146,239 +228,97 @@ export default function Sidebar({ onClose }) {
           )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-2 space-y-0.5 overflow-y-auto custom-scrollbar">
-          {isManager && managerSharedItems.filter((i) => i.label !== "API Keys").map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                isActive(item.href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[18px]",
-                  isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                )}
-              >
-                {item.icon}
-              </span>
-              <span className="text-[13px] font-medium">{item.label}</span>
-            </Link>
-          ))}
-
-          {isManager && managerItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                isActive(item.href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[18px]",
-                  isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                )}
-              >
-                {item.icon}
-              </span>
-              <span className="text-[13px] font-medium">{item.label}</span>
-            </Link>
-          ))}
-
-          {isDeveloper && developerItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                isActive(item.href)
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[18px]",
-                  isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                )}
-              >
-                {item.icon}
-              </span>
-              <span className="text-[13px] font-medium">{item.label}</span>
-            </Link>
-          ))}
-
-          {/* System section — manager only */}
-          {isManager && (
-          <div className="pt-3 mt-2 space-y-0.5">
-            <p className="px-4 text-xs font-semibold text-text-muted/60 uppercase tracking-wider mb-2">
-              System
-            </p>
-
-            {/* Media Providers accordion */}
-            <button
-              onClick={() => setMediaOpen((v) => !v)}
-              className={cn(
-                "w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                pathname.startsWith("/dashboard/media-providers")
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span className="material-symbols-outlined text-[18px]">perm_media</span>
-              <span className="text-[13px] font-medium flex-1 text-left">Media Providers</span>
-              <span className="material-symbols-outlined text-[14px] transition-transform" style={{ transform: mediaOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                expand_more
-              </span>
-            </button>
-            {mediaOpen && (
-              <div className="pl-4">
-                {MEDIA_PROVIDER_KINDS.filter((k) => VISIBLE_MEDIA_KINDS.includes(k.id)).map((kind) => (
-                  <Link
-                    key={kind.id}
-                    href={`/dashboard/media-providers/${kind.id}`}
-                    onClick={onClose}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
-                      pathname.startsWith(`/dashboard/media-providers/${kind.id}`)
-                        ? "bg-primary/10 text-primary"
-                        : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                    )}
-                  >
-                    <span className="material-symbols-outlined text-[16px]">{kind.icon}</span>
-                    <span className="text-sm">{kind.label}</span>
-                  </Link>
-                ))}
-                <Link
-                  key={COMBINED_WEB_ITEM.id}
-                  href={COMBINED_WEB_ITEM.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-4 py-1 rounded-lg transition-all group",
-                    pathname.startsWith(COMBINED_WEB_ITEM.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                  )}
-                >
-                  <span className="material-symbols-outlined text-[16px]">{COMBINED_WEB_ITEM.icon}</span>
-                  <span className="text-sm">{COMBINED_WEB_ITEM.label}</span>
-                </Link>
-              </div>
-            )}
-
-            {systemItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onClose}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                  isActive(item.href)
-                    ? "bg-primary/10 text-primary"
-                    : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                )}
-              >
-                <span
-                  className={cn(
-                    "material-symbols-outlined text-[18px]",
-                    isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                  )}
-                >
-                  {item.icon}
-                </span>
-                <span className="text-[13px] font-medium">{item.label}</span>
-              </Link>
-            ))}
-
-            {/* Debug items (inside System section, before Settings) */}
-            {debugItems.map((item) => {
-              const show = item.href !== "/dashboard/translator" || enableTranslator;
-              return show ? (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onClose}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                    isActive(item.href)
-                      ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "material-symbols-outlined text-[18px]",
-                      isActive(item.href) ? "fill-1" : "group-hover:text-primary transition-colors"
-                    )}
-                  >
-                    {item.icon}
-                  </span>
-                  <span className="text-[13px] font-medium">{item.label}</span>
-                </Link>
-              ) : null;
-            })}
-
-            {/* Settings */}
-            <Link
-              href="/dashboard/profile"
-              onClick={onClose}
-              className={cn(
-                "flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
-                isActive("/dashboard/profile")
-                  ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
-              )}
-            >
-              <span
-                className={cn(
-                  "material-symbols-outlined text-[18px]",
-                  isActive("/dashboard/profile") ? "fill-1" : "group-hover:text-primary transition-colors"
-                )}
-              >
-                settings
-              </span>
-              <span className="text-[13px] font-medium">Settings</span>
-            </Link>
-          </div>
+        <nav className="custom-scrollbar flex-1 space-y-4 overflow-y-auto px-4 py-4">
+          {!isLoaded && (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-9 animate-pulse rounded-xl bg-surface-2" />
+              ))}
+            </div>
           )}
 
+          {isLoaded &&
+            visibleSections.map((section) => (
+              <div key={section.id}>
+                <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-text-subtle">
+                  {section.title}
+                </p>
+                <div className="space-y-1">
+                  {section.items.map((item) => (
+                    <NavLink
+                      key={item.href}
+                      item={item}
+                      active={isActive(item.href)}
+                      onClose={onClose}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
         </nav>
 
+        {isManager && (
+          <div className="border-t border-border-subtle/70 p-3">
+            <Button
+              variant="outline"
+              fullWidth
+              icon="power_settings_new"
+              onClick={() => setShowShutdownModal(true)}
+              className="border-red-200/80 text-red-500 hover:border-red-300 hover:bg-red-500/10"
+            >
+              Shutdown
+            </Button>
+          </div>
+        )}
       </aside>
 
-      {/* Update Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showShutdownModal}
+        onClose={() => setShowShutdownModal(false)}
+        onConfirm={handleShutdown}
+        title="Close Proxy"
+        message="Are you sure you want to close the proxy server?"
+        confirmText="Close"
+        cancelText="Cancel"
+        variant="danger"
+        loading={isShuttingDown}
+      />
+
       <ConfirmModal
         isOpen={showUpdateModal}
         onClose={() => setShowUpdateModal(false)}
         onConfirm={handleUpdate}
         title="Update Devlens"
-        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it and install manually.`}
+        message={`Show install command for v${updateInfo?.latestVersion || ""}? You can copy it and shutdown to install manually.`}
         confirmText="Show Command"
         cancelText="Cancel"
         variant="primary"
       />
 
-      {isUpdating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-6">
-          <ManualUpdatePanel
-            latestVersion={updateInfo?.latestVersion}
-            installCmd={INSTALL_CMD}
-            copied={copied}
-            onCopy={handleCopyUpdateCommand}
-            onCancel={handleCancelUpdate}
-          />
+      {(isDisconnected || isUpdating) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-6 backdrop-blur-sm">
+          {isUpdating ? (
+            <ManualUpdatePanel
+              latestVersion={updateInfo?.latestVersion}
+              installCmd={INSTALL_CMD}
+              copied={copied}
+              onCopyAndShutdown={handleCopyAndShutdown}
+              onCancel={handleCancelUpdate}
+              countdown={shutdownCountdown}
+              isDisconnected={isDisconnected}
+            />
+          ) : (
+            <div className="p-8 text-center">
+              <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-red-500/20 text-red-500">
+                <span className="material-symbols-outlined text-[32px]">power_off</span>
+              </div>
+              <h2 className="mb-2 text-xl font-semibold text-white">Server Disconnected</h2>
+              <p className="mb-6 text-text-muted">The proxy server has been stopped.</p>
+              <Button variant="secondary" onClick={() => globalThis.location.reload()}>
+                Reload Page
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </>
@@ -389,40 +329,70 @@ Sidebar.propTypes = {
   onClose: PropTypes.func,
 };
 
-function ManualUpdatePanel({ latestVersion, installCmd, copied, onCopy, onCancel }) {
+function ManualUpdatePanel({
+  latestVersion,
+  installCmd,
+  copied,
+  onCopyAndShutdown,
+  onCancel,
+  countdown,
+  isDisconnected,
+}) {
+  const isCountingDown = countdown > 0;
+
   return (
-    <div className="w-full max-w-lg rounded-xl bg-neutral-900/95 border border-white/10 p-6 text-white">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="flex items-center justify-center size-11 rounded-full bg-indigo-500/20 text-indigo-400">
+    <div className="w-full max-w-lg rounded-xl border border-white/10 bg-neutral-900/95 p-6 text-white">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex size-11 items-center justify-center rounded-full bg-blue-500/20 text-blue-300">
           <span className="material-symbols-outlined text-[24px]">content_copy</span>
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Update Devlens{latestVersion ? ` to v${latestVersion}` : ""}</h2>
+          <h2 className="text-lg font-semibold">
+            Update Devlens{latestVersion ? ` to v${latestVersion}` : ""}
+          </h2>
           <p className="text-xs text-white/60">
-            Copy the install command and run it in your terminal.
+            {isDisconnected
+              ? "Server stopped. Paste the command into a terminal to install."
+              : isCountingDown
+                ? `Command copied. Server will stop in ${countdown}s...`
+                : "Click the button below to copy the install command and shutdown."}
           </p>
         </div>
       </div>
 
-      <p className="text-sm text-white/80 mb-2">Install command:</p>
-      <div className="w-full px-3 py-2 rounded bg-white/5 mb-4">
-        <code className="text-xs font-mono text-indigo-400 break-all">{installCmd}</code>
+      <p className="mb-2 text-sm text-white/80">Install command:</p>
+      <div className="mb-4 w-full rounded bg-white/5 px-3 py-2">
+        <code className="break-all font-mono text-xs text-blue-300">{installCmd}</code>
       </div>
 
-      <ol className="text-xs text-white/70 space-y-1 list-decimal list-inside mb-4">
-        <li>Click <strong>Copy Command</strong> below.</li>
+      <ol className="mb-4 list-inside list-decimal space-y-1 text-xs text-white/70">
+        <li>
+          Click <strong>Copy & Shutdown</strong> below.
+        </li>
         <li>Paste the command into your terminal and press Enter.</li>
-        <li>Run <code className="px-1 rounded bg-white/10 text-green-400">devlens</code> again after install if needed.</li>
+        <li>
+          Run <code className="rounded bg-white/10 px-1 text-green-400">devlens</code> again after install.
+        </li>
       </ol>
 
-      <div className="flex gap-2">
-        <Button variant="secondary" onClick={onCancel}>
-          Cancel
+      {isDisconnected ? (
+        <Button variant="secondary" fullWidth onClick={() => globalThis.location.reload()}>
+          Reload Page
         </Button>
-        <Button variant="primary" fullWidth onClick={onCopy}>
-          {copied ? "✓ Copied" : "Copy Command"}
-        </Button>
-      </div>
+      ) : (
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={onCancel} disabled={isCountingDown}>
+            Cancel
+          </Button>
+          <Button variant="primary" fullWidth onClick={onCopyAndShutdown} disabled={isCountingDown}>
+            {copied
+              ? "Copied - shutting down..."
+              : isCountingDown
+                ? `Shutting down in ${countdown}s`
+                : "Copy & Shutdown"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
@@ -431,6 +401,8 @@ ManualUpdatePanel.propTypes = {
   latestVersion: PropTypes.string,
   installCmd: PropTypes.string.isRequired,
   copied: PropTypes.bool,
-  onCopy: PropTypes.func.isRequired,
+  onCopyAndShutdown: PropTypes.func.isRequired,
   onCancel: PropTypes.func.isRequired,
+  countdown: PropTypes.number,
+  isDisconnected: PropTypes.bool,
 };

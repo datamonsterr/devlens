@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Unit tests for Devlens",
   "scripts": {
-    "test": "npx vitest run --reporter=verbose",
-    "test:watch": "npx vitest --reporter=verbose"
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest --reporter=verbose"
   },
   "devDependencies": {
     "vitest": "^4.0.0"

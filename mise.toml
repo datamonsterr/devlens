@@ -1,0 +1,8 @@
+[tools]
+node = "25.9.0"
+# pnpm managed via corepack (bundled with Node); see package.json#packageManager
+java = "temurin-21"
+
+[settings]
+activate_aggressive = true
+trusted_config_paths = ["/home/dat/dev/devlens"]

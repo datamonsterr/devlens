@@ -3,6 +3,7 @@
   "version": "0.5.0",
   "description": "Devlens - Centralized AI provider management for teams",
   "private": true,
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev": "JWT_SECRET=${JWT_SECRET:-devlens-local-dev-secret} next dev --webpack --port 20262",
     "build": "next build --webpack",
@@ -10,8 +11,8 @@
     "dev:bun": "JWT_SECRET=${JWT_SECRET:-devlens-local-dev-secret} bun --bun next dev --webpack --port 20262",
     "build:bun": "bun --bun next build --webpack",
     "start:bun": "bun ./.next/standalone/server.js",
-    "lint": "npx eslint src/ --ext .js,.jsx,.ts,.tsx 2>&1 || true",
-    "test": "cd tests && npm test",
+    "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx 2>&1 || true",
+    "test": "pnpm --filter devlens-tests test",
     "turso:preflight": "node scripts/turso-migrate.mjs preflight",
     "turso:schema": "node scripts/turso-migrate.mjs schema-apply",
     "turso:export": "node scripts/turso-migrate.mjs export-sqlite",
@@ -54,7 +55,7 @@
   "optionalDependencies": {
     "better-sqlite3": "^12.6.2"
   },
-  "comment_better_sqlite3": "kept in optionalDependencies so npm install doesn't fail on systems without build tools — sql.js is used as fallback at runtime",
+  "comment_better_sqlite3": "kept in optionalDependencies so pnpm install doesn't fail on systems without build tools — sql.js is used as fallback at runtime",
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "eslint": "^9",

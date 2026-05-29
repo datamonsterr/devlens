@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { assertManager, requireTeamContext } from "@/lib/auth";
 import { getPricing, updatePricing, resetPricing, resetAllPricing } from "@/lib/localDb.js";
 import { getDefaultPricing } from "@/shared/constants/pricing.js";
+import { writeAuditLog } from "@/lib/db";
+import { getTeamContext } from "@/lib/auth";
 
 /**
  * GET /api/pricing
@@ -28,6 +30,7 @@ export async function GET() {
  */
 export async function PATCH(request) {
   try {
+    const ctx = await getTeamContext();
     await assertManager();
     const body = await request.json();
 
@@ -76,6 +79,16 @@ export async function PATCH(request) {
     }
 
     const updatedPricing = await updatePricing(body);
+    if (ctx?.teamId) {
+      await writeAuditLog({
+        teamId: ctx.teamId,
+        actorId: ctx.userId,
+        actorRole: ctx.role,
+        action: "update",
+        resource: "pricingOverride",
+        payload: { providers: Object.keys(body) },
+      }).catch(() => {});
+    }
     return NextResponse.json(updatedPricing);
   } catch (error) {
     console.error("Error updating pricing:", error);
@@ -93,6 +106,7 @@ export async function PATCH(request) {
  */
 export async function DELETE(request) {
   try {
+    const ctx = await getTeamContext();
     await assertManager();
     const { searchParams } = new URL(request.url);
     const provider = searchParams.get("provider");
@@ -110,6 +124,16 @@ export async function DELETE(request) {
     }
 
     const pricing = await getPricing();
+    if (ctx?.teamId) {
+      await writeAuditLog({
+        teamId: ctx.teamId,
+        actorId: ctx.userId,
+        actorRole: ctx.role,
+        action: "reset",
+        resource: "pricingOverride",
+        payload: { provider: provider || null, model: model || null },
+      }).catch(() => {});
+    }
     return NextResponse.json(pricing);
   } catch (error) {
     console.error("Error resetting pricing:", error);

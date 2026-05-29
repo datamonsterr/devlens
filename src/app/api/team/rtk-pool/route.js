@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireTeamContext } from "@/lib/auth";
 import { assertManager } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
+import { writeAuditLog } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,15 @@ export async function PUT(request) {
     });
 
     const updated = await adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: mode === "reset" ? "reset" : "topup",
+      resource: "rtkPool",
+      payload: { amount, mode: mode || "topup", newPool: updated.rtkPool },
+    }).catch(() => {});
 
     return NextResponse.json({
       rtkPool: updated.rtkPool,

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Button, Card, Input, Badge } from "@/shared/components";
 import RoleGuard from "@/shared/components/RoleGuard";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
@@ -13,12 +14,26 @@ export default function TeamPage() {
   );
 }
 
+function formatTokens(n) {
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+  return String(n || 0);
+}
+
+function formatCost(n) {
+  return `$${Number(n || 0).toFixed(4)}`;
+}
+
 function TeamContent() {
+  const router = useRouter();
   const [members, setMembers] = useState([]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [newKey, setNewKey] = useState(null);
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState("createdAt");
+  const [sortDir, setSortDir] = useState("asc");
   const { copied, copy } = useCopyToClipboard(3000);
 
   async function load() {
@@ -49,6 +64,35 @@ function TeamContent() {
     await fetch(`/api/team/members?userId=${encodeURIComponent(userId)}`, { method: "DELETE" });
     await load();
   }
+
+  const filteredMembers = useMemo(() => {
+    let result = [...members];
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((m) =>
+        (m.email || "").toLowerCase().includes(q) ||
+        (m.clerkUserId || "").toLowerCase().includes(q) ||
+        (m.role || "").toLowerCase().includes(q)
+      );
+    }
+    result.sort((a, b) => {
+      let aVal = a[sortKey], bVal = b[sortKey];
+      if (sortKey === "totalCost" || sortKey === "totalTokens" || sortKey === "totalRequests") {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      } else if (sortKey === "createdAt") {
+        aVal = aVal || "";
+        bVal = bVal || "";
+      } else {
+        aVal = (aVal || "").toString().toLowerCase();
+        bVal = (bVal || "").toString().toLowerCase();
+      }
+      if (aVal < bVal) return sortDir === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortDir === "asc" ? 1 : -1;
+      return 0;
+    });
+    return result;
+  }, [members, search, sortKey, sortDir]);
 
   return (
     <div className="flex min-w-0 flex-col gap-6 px-1 sm:px-0">
@@ -119,6 +163,16 @@ function TeamContent() {
         </div>
       </Card>
 
+      <div className="flex items-center gap-2">
+        <Input
+          className="max-w-xs"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search developers..."
+          icon="search"
+        />
+      </div>
+
       <Card padding="none" className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -129,14 +183,19 @@ function TeamContent() {
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Invite</th>
                 <th className="px-4 py-3 font-medium">API Keys</th>
-                <th className="px-4 py-3 font-medium">Assigned Key</th>
-                <th className="px-4 py-3 font-medium">Last Used</th>
+                <th className="px-4 py-3 font-medium">Requests</th>
+                <th className="px-4 py-3 font-medium">Tokens</th>
+                <th className="px-4 py-3 font-medium">Cost</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody>
-              {members.map((m) => (
-                <tr key={m.id} className="border-t border-border-subtle/80">
+              {filteredMembers.map((m) => (
+                <tr
+                  key={m.id}
+                  className="border-t border-border-subtle/80 cursor-pointer hover:bg-surface-2/50 transition-colors"
+                  onClick={() => router.push(`/dashboard/team/members/${m.id}`)}
+                >
                   <td className="px-4 py-3 font-mono text-xs">{m.email || m.clerkUserId || m.id}</td>
                   <td className="px-4 py-3">{m.role}</td>
                   <td className="px-4 py-3">
@@ -148,24 +207,11 @@ function TeamContent() {
                   </td>
                   <td className="px-4 py-3 text-xs text-text-muted">{m.inviteStatus || (m.clerkUserId ? "onboarded" : "—")}</td>
                   <td className="px-4 py-3">{m.activeApiKeyCount || 0}/{m.apiKeyCount || 0}</td>
-                  <td className="px-4 py-3 text-xs font-mono text-text-muted">
-                    {m.assignedApiKeyId ? (
-                      <div className="flex items-center gap-2">
-                        <span title={m.assignedApiKeyId}>{m.assignedApiKeyId.slice(0, 12)}...</span>
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          icon={copied === m.assignedApiKeyId ? "check" : "content_copy"}
-                          onClick={() => copy(m.assignedApiKeyId, m.assignedApiKeyId)}
-                        >
-                          {copied === m.assignedApiKeyId ? "Copied" : "Copy ID"}
-                        </Button>
-                      </div>
-                    ) : (m.apiKeyCount > 0 ? "Yes" : "—")}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-text-muted">{m.lastKeyUsedAt || "never"}</td>
+                  <td className="px-4 py-3 text-xs font-mono">{m.totalRequests?.toLocaleString() || "0"}</td>
+                  <td className="px-4 py-3 text-xs font-mono">{formatTokens(m.totalTokens)}</td>
+                  <td className="px-4 py-3 text-xs font-mono">{formatCost(m.totalCost)}</td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="danger" size="sm" onClick={() => deactivate(m.id)}>Deactivate</Button>
+                    <Button variant="danger" size="sm" onClick={(e) => { e.stopPropagation(); deactivate(m.id); }}>Deactivate</Button>
                   </td>
                 </tr>
               ))}

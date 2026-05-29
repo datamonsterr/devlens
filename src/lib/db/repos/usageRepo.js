@@ -693,6 +693,69 @@ export async function getChartData(period = "7d") {
   });
 }
 
+export async function getMemberUsage(teamId, userId, filter = {}) {
+  const db = await getAdapter();
+  const conds = ["teamId = ?", "userId = ?"];
+  const params = [teamId, userId];
+
+  if (filter.startDate) { conds.push("timestamp >= ?"); params.push(filter.startDate); }
+  if (filter.endDate) { conds.push("timestamp <= ?"); params.push(filter.endDate); }
+
+  const where = `WHERE ${conds.join(" AND ")}`;
+  const rows = await db.all(
+    `SELECT timestamp, promptTokens, completionTokens, cost, rtkTokensSaved, provider, model, status FROM usageHistory ${where} ORDER BY timestamp ASC`,
+    params
+  );
+
+  let totalRequests = 0, totalPromptTokens = 0, totalCompletionTokens = 0, totalCost = 0, totalRtkSaved = 0;
+  const dailyMap = {};
+  const providerMap = {};
+  const modelMap = {};
+
+  for (const r of rows) {
+    totalRequests++;
+    totalPromptTokens += r.promptTokens || 0;
+    totalCompletionTokens += r.completionTokens || 0;
+    totalCost += r.cost || 0;
+    totalRtkSaved += r.rtkTokensSaved || 0;
+
+    const dateKey = r.timestamp?.slice(0, 10) || "unknown";
+    if (!dailyMap[dateKey]) dailyMap[dateKey] = { date: dateKey, requests: 0, tokens: 0, cost: 0 };
+    dailyMap[dateKey].requests++;
+    dailyMap[dateKey].tokens += (r.promptTokens || 0) + (r.completionTokens || 0);
+    dailyMap[dateKey].cost += r.cost || 0;
+
+    if (r.provider) {
+      if (!providerMap[r.provider]) providerMap[r.provider] = { provider: r.provider, cost: 0, requests: 0 };
+      providerMap[r.provider].cost += r.cost || 0;
+      providerMap[r.provider].requests++;
+    }
+
+    if (r.model) {
+      const key = `${r.model}|${r.provider || "unknown"}`;
+      if (!modelMap[key]) modelMap[key] = { model: r.model, provider: r.provider || "unknown", requests: 0, cost: 0 };
+      modelMap[key].requests++;
+      modelMap[key].cost += r.cost || 0;
+    }
+  }
+
+  const daily = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
+  const providers = Object.values(providerMap).sort((a, b) => b.cost - a.cost);
+  const models = Object.values(modelMap).sort((a, b) => b.cost - a.cost);
+
+  return {
+    requests: totalRequests,
+    tokens: totalPromptTokens + totalCompletionTokens,
+    promptTokens: totalPromptTokens,
+    completionTokens: totalCompletionTokens,
+    cost: totalCost,
+    rtkSaved: totalRtkSaved,
+    daily,
+    providers,
+    models,
+  };
+}
+
 function formatLogDate(date = new Date()) {
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;

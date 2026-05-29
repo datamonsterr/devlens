@@ -61,6 +61,11 @@ export {
   saveRequestDetail, getRequestDetails, getRequestDetailById,
 } from "./repos/requestDetailsRepo.js";
 
+// Audit log
+export {
+  writeAuditLog, getAuditLog,
+} from "./repos/auditRepo.js";
+
 // Export/import full DB
 export async function exportDb() {
   const db = await getAdapter();

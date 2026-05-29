@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getComboById, updateCombo, deleteCombo, getComboByName } from "@/lib/localDb";
 import { resetComboRotation } from "open-sse/services/combo.js";
+import { writeAuditLog } from "@/lib/db";
 
 // Validate combo name: only a-z, A-Z, 0-9, -, _
 const VALID_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
@@ -56,6 +57,16 @@ export async function PUT(request, { params }) {
     if (prev?.name) resetComboRotation(prev.name);
     if (combo.name && combo.name !== prev?.name) resetComboRotation(combo.name);
 
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "update",
+      resource: "combo",
+      resourceId: id,
+      payload: { name: combo.name, models: combo.models?.length ?? 0 },
+    }).catch(() => {});
+
     return NextResponse.json(combo);
   } catch (error) {
     console.log("Error updating combo:", error);
@@ -76,6 +87,16 @@ export async function DELETE(request, { params }) {
     }
 
     if (prev?.name) resetComboRotation(prev.name);
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "delete",
+      resource: "combo",
+      resourceId: id,
+      payload: { name: prev?.name },
+    }).catch(() => {});
     
     return NextResponse.json({ success: true });
   } catch (error) {

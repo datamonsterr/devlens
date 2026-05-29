@@ -5,6 +5,7 @@ import {
   updateProviderConnection,
   deleteProviderConnection,
 } from "@/models";
+import { writeAuditLog } from "@/lib/db";
 
 function normalizeProxyConfig(body = {}) {
   const hasAnyProxyField =
@@ -132,6 +133,16 @@ export async function PUT(request, { params }) {
     delete result.refreshToken;
     delete result.idToken;
 
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "update",
+      resource: "providerConnection",
+      resourceId: id,
+      payload: { fields: Object.keys(updateData) },
+    }).catch(() => {});
+
     return NextResponse.json({ connection: result });
   } catch (error) {
     if (error instanceof Response) return error;
@@ -146,10 +157,21 @@ export async function DELETE(request, { params }) {
     const ctx = await requireManagerContext();
     const { id } = await params;
 
+    const conn = await getProviderConnectionById(id, ctx.teamId);
     const deleted = await deleteProviderConnection(id, ctx.teamId);
     if (!deleted) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "delete",
+      resource: "providerConnection",
+      resourceId: id,
+      payload: { provider: conn?.provider, name: conn?.name },
+    }).catch(() => {});
 
     return NextResponse.json({ message: "Connection deleted successfully" });
   } catch (error) {

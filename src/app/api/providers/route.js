@@ -6,6 +6,7 @@ import {
   getProviderNodeById,
   getProviderNodes,
 } from "@/models";
+import { writeAuditLog } from "@/lib/db";
 import { APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { AI_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers";
 import { normalizeProviderId, normalizeProviderSpecificData } from "@/lib/providerNormalization";
@@ -158,6 +159,16 @@ export async function POST(request) {
     // Hide sensitive fields
     const result = { ...newConnection };
     delete result.apiKey;
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "create",
+      resource: "providerConnection",
+      resourceId: newConnection.id,
+      payload: { provider, name: connectionName },
+    }).catch(() => {});
 
     return NextResponse.json({ connection: result }, { status: 201 });
   } catch (error) {

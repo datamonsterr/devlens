@@ -1,5 +1,5 @@
 // Latest schema version — bumped when a migration is added in ./migrations/
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const PRAGMA_SQL = `
 PRAGMA journal_mode = WAL;
@@ -37,6 +37,9 @@ export const TABLES = {
       email: "TEXT",
       priority: "INTEGER",
       isActive: "INTEGER DEFAULT 1",
+      cooldown: "INTEGER DEFAULT 0",
+      lastTestedAt: "TEXT",
+      lastTestResult: "TEXT",
       data: "TEXT NOT NULL",
       createdAt: "TEXT NOT NULL",
       updatedAt: "TEXT NOT NULL",
@@ -201,6 +204,23 @@ export const TABLES = {
       maxKeysPerDeveloper: "INTEGER DEFAULT 5",
       data: "TEXT NOT NULL DEFAULT '{}'",
     },
+  },
+  auditLog: {
+    columns: {
+      id: "INTEGER PRIMARY KEY AUTOINCREMENT",
+      teamId: "TEXT NOT NULL REFERENCES teams(id)",
+      actorId: "TEXT NOT NULL",
+      actorRole: "TEXT NOT NULL",
+      action: "TEXT NOT NULL",
+      resource: "TEXT NOT NULL",
+      resourceId: "TEXT",
+      payload: "TEXT",
+      createdAt: "TEXT NOT NULL",
+    },
+    indexes: [
+      "CREATE INDEX IF NOT EXISTS idx_audit_team ON auditLog(teamId)",
+      "CREATE INDEX IF NOT EXISTS idx_audit_ts ON auditLog(createdAt DESC)",
+    ],
   },
   requestDetails: {
     columns: {

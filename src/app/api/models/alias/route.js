@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getModelAliases, setModelAlias, deleteModelAlias } from "@/models";
+import { writeAuditLog } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +30,16 @@ export async function PUT(request) {
 
     await setModelAlias(alias, model, ctx.teamId);
 
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "set",
+      resource: "modelAlias",
+      resourceId: alias,
+      payload: { alias, model },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, model, alias });
   } catch (error) {
     console.log("Error updating alias:", error);
@@ -48,6 +59,15 @@ export async function DELETE(request) {
     }
 
     await deleteModelAlias(alias, ctx.teamId);
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "delete",
+      resource: "modelAlias",
+      resourceId: alias,
+    }).catch(() => {});
 
     return NextResponse.json({ success: true });
   } catch (error) {

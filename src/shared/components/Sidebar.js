@@ -25,6 +25,7 @@ const managerSections = [
     id: "manager-config",
     title: "Infrastructure",
     items: [
+      { href: "/dashboard/router", label: "Router Config", icon: "settings_input_component" },
       { href: "/dashboard/providers", label: "Provider Connections", icon: "lan" },
       { href: "/dashboard/models", label: "Model Browser", icon: "view_in_ar" },
       { href: "/dashboard/combos", label: "Combos", icon: "account_tree" },

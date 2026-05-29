@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getCombos, createCombo, getComboByName } from "@/lib/localDb";
+import { writeAuditLog } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,16 @@ export async function POST(request) {
     }
 
     const combo = await createCombo({ teamId: ctx.teamId, name, models: models || [], kind: kind || null });
+
+    await writeAuditLog({
+      teamId: ctx.teamId,
+      actorId: ctx.userId,
+      actorRole: ctx.role,
+      action: "create",
+      resource: "combo",
+      resourceId: combo.id,
+      payload: { name, models: models?.length ?? 0 },
+    }).catch(() => {});
 
     return NextResponse.json(combo, { status: 201 });
   } catch (error) {

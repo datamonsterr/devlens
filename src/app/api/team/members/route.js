@@ -19,13 +19,29 @@ export async function GET() {
         MAX(ak.lastUsedAt) as lastKeyUsedAt,
         MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.id ELSE NULL END) as assignedApiKeyId,
         MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.createdAt ELSE NULL END) as assignedApiKeyCreatedAt,
-        MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.isActive ELSE 0 END) as assignedApiKeyActive
+        MAX(CASE WHEN ak.name = 'Initial Developer Key' THEN ak.isActive ELSE 0 END) as assignedApiKeyActive,
+        COALESCE(uh_sum.totalRequests, 0) as totalRequests,
+        COALESCE(uh_sum.totalTokens, 0) as totalTokens,
+        COALESCE(uh_sum.totalCost, 0) as totalCost,
+        COALESCE(uh_sum.errorCount, 0) as errorCount,
+        uh_sum.lastApiRequestAt
        FROM users u
        LEFT JOIN apiKeys ak ON ak.userId = u.id
+       LEFT JOIN (
+         SELECT userId,
+           COUNT(*) as totalRequests,
+           SUM(promptTokens + completionTokens) as totalTokens,
+           SUM(cost) as totalCost,
+           MAX(timestamp) as lastApiRequestAt,
+           SUM(CASE WHEN status NOT IN ('ok', '200 OK', 'success', '200') THEN 1 ELSE 0 END) as errorCount
+         FROM usageHistory
+         WHERE teamId = ?
+         GROUP BY userId
+       ) uh_sum ON uh_sum.userId = u.id
        WHERE u.teamId = ?
        GROUP BY u.id
        ORDER BY u.createdAt ASC`,
-      [ctx.teamId]
+      [ctx.teamId, ctx.teamId]
     );
 
     return NextResponse.json({ members });

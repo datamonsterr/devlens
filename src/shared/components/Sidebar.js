@@ -19,6 +19,7 @@ const managerSections = [
       { href: "/dashboard", label: "Overview", icon: "insights" },
       { href: "/dashboard/usage", label: "Usage Analytics", icon: "query_stats" },
       { href: "/dashboard/team", label: "Team Members", icon: "supervisor_account" },
+      { href: "/dashboard/team/logs", label: "Team Logs", icon: "receipt_long" },
     ],
   },
   {

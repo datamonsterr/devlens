@@ -32,6 +32,7 @@ const managerSections = [
       { href: "/dashboard/combos", label: "Combos", icon: "account_tree" },
       { href: "/dashboard/pricing", label: "Pricing Overrides", icon: "price_change" },
       { href: "/dashboard/quota", label: "RTK Pool", icon: "savings" },
+      { href: "/dashboard/chatbot", label: "Chatbot", icon: "smart_toy" },
     ],
   },
   {

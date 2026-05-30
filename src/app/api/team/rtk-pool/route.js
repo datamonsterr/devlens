@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    await assertManager();
     const ctx = await requireTeamContext();
 
     const adapter = await getAdapter();

@@ -97,6 +97,9 @@ export async function POST(request) {
     if (!apiKey && provider !== "ollama-local") {
       return NextResponse.json({ error: `${isWebCookieProvider ? "Cookie value" : "API Key"} is required` }, { status: 400 });
     }
+    if (typeof name === "string" && name.trim() === "") {
+      return NextResponse.json({ error: "Name cannot be empty" }, { status: 400 });
+    }
     const connectionName = name || displayName || AI_PROVIDERS[provider]?.name;
     if (!connectionName) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });

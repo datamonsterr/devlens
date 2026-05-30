@@ -2,7 +2,6 @@ import { getAdapter } from "@/lib/db/driver";
 import { auth } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { v4 as uuidv4 } from "uuid";
-import { verifyDashboardAuthToken } from "./dashboardSession.js";
 import { log } from "@/lib/logger";
 
 function toTeamRole(orgRole, sessionClaims) {
@@ -69,16 +68,35 @@ async function ensureUser(adapter, clerkUserId, teamId, role) {
 async function getLocalDevContext() {
   if (process.env.NODE_ENV !== "development" || process.env.DEVLENS_LOCAL_AUTH_FALLBACK === "false") return null;
   const token = (await cookies()).get("auth_token")?.value;
-  if (!(await verifyDashboardAuthToken(token))) {
-    log.debug("TEAM", "Local dev fallback: no valid auth_token");
+  if (!token) {
+    log.debug("TEAM", "Local dev fallback: no auth_token cookie");
     return null;
   }
 
-  log.info("TEAM", "Using local dev fallback auth context");
+  let session;
+  try {
+    const { jwtVerify } = await import("jose");
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "devlens-local-dev-secret");
+    const { payload } = await jwtVerify(token, secret);
+    session = payload;
+  } catch {
+    log.debug("TEAM", "Local dev fallback: invalid auth_token JWT");
+    return null;
+  }
+
+  if (!session.authenticated) {
+    log.debug("TEAM", "Local dev fallback: auth_token not authenticated");
+    return null;
+  }
+
+  const clerkUserId = session.uid || "local-dev-manager";
+  const role = session.role || "manager";
+
+  log.info("TEAM", `Using local dev fallback auth context uid=${clerkUserId} role=${role}`);
   const adapter = await getAdapter();
   const sessionClaims = { org_name: "Local Dev Team" };
   const team = await ensureTeam(adapter, "local-dev", sessionClaims);
-  const user = await ensureUser(adapter, "local-dev-manager", team.id, "manager");
+  const user = await ensureUser(adapter, clerkUserId, team.id, role);
   return {
     teamId: team.id,
     teamName: team.name,

@@ -210,3 +210,22 @@ These modules and operations were tested and function correctly (with valid auth
 | 14 | LOW | DB | Queue swallows errors silently | NO |
 | 15 | LOW | Audit | Audit failures silently swallowed | NO |
 | 16 | MEDIUM | Deployment | Vercel serves wrong project (GitHub Profile Analyzer) | NO |
+
+---
+
+## BUG-17: RTK pool endpoint accessible by developers (MEDIUM) — FIXED
+
+**File**: `src/app/api/team/rtk-pool/route.js:9`
+GET handler uses `requireTeamContext()` without role check. Developers can see team RTK pool balance and history.
+PUT handler already has `assertManager()` — only GET was missing.
+
+**Fix**: Added `await assertManager()` before `requireTeamContext()` in GET handler.
+
+---
+
+## BUG-18: Empty provider name accepted (LOW) — FIXED
+
+**File**: `src/app/api/providers/route.js:100`
+Validation only checks `if (!connectionName)`, but `"" || displayName || AI_PROVIDERS[provider]?.name` falls through to the default name. Explicit `name=""` was silently replaced.
+
+**Fix**: Added explicit check: `if (typeof name === "string" && name.trim() === "")` returning 400 before the fallback chain.

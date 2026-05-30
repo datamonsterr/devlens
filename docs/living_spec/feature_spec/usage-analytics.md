@@ -12,6 +12,10 @@ Track cost, tokens, provider/model distribution, RTK savings, and request outcom
 
 - Usage event stores Team and Developer identity.
 - Manager sees Team aggregate and per-Developer breakdown.
+- Manager can generate Team AI ROI reports from Team-scoped analytics data.
+- AI ROI report UI lives at `/dashboard/reports` and is Manager-only.
+- AI ROI report generation uses `POST /api/reports/ai-roi` with Team-scoped date/member filters.
+- AI ROI API normalizes AI output into stable JSON shape and returns `data_quality_notes` when telemetry is missing or partial.
 - Developer sees own usage only.
 - Removed Developers remain in historical reports.
 - Pricing Overrides drive cost calculations.

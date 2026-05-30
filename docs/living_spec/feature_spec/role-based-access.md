@@ -19,6 +19,7 @@ New Devlens feature.
 - Manage Pricing Overrides.
 - Manage RTK Pool.
 - View Team usage and per-Developer analytics.
+- Generate and review Team AI ROI reports.
 
 ## Developer can
 

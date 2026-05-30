@@ -19,6 +19,7 @@
 - `/dashboard/models`: Manager/Developer Model Browser.
 - `/dashboard/keys`: Developer API Keys and API access view with base URL copy; Manager redirects to Team management.
 - `/dashboard/usage`: role-filtered analytics.
+- `/dashboard/reports`: Manager-only AI ROI report generation and insights dashboard.
 - `/dashboard/cli-config`: CLI Config Snippets (aliased to `/dashboard/cli-tools` with redirect).
 - `/dashboard/console-log`: role-filtered sanitized logs.
 - `/dashboard/endpoint`: Team API endpoint. Local deployments can expose Cloudflared endpoint; Vercel deployments use the deployed Vercel URL.
@@ -27,6 +28,7 @@
 ## Management API
 
 - `/api/team`: server-resolved Team context for signed-in Clerk Organization session.
+- `/api/reports/ai-roi`: Manager generates Team-scoped AI ROI report JSON from aggregated telemetry and AI analysis.
 - `/api/tunnel/status`: signed-in Team context can read endpoint status. On Vercel, returns deployed public endpoint and `unsupported: true` for quick tunnel process behavior; locally, returns Cloudflared tunnel status.
 - `/api/tunnel/enable`: Manager refreshes/enables local Cloudflared tunnel URL. On Vercel, returns unsupported result with deployed public endpoint and does not spawn `cloudflared`.
 - `/api/tunnel/disable`: Manager disables local Cloudflared tunnel. On Vercel, returns unsupported result with deployed public endpoint and does not stop `cloudflared`.

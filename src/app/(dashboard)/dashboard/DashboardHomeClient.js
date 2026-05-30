@@ -321,6 +321,12 @@ export default function DashboardHomeClient() {
               desc="Top up or reset RTK savings capacity for streaming optimization."
               icon="data_usage"
             />
+            <QuickLink
+              href="/dashboard/chatbot"
+              title="Chatbot"
+              desc="Configure and interact with an external AI chatbot."
+              icon="smart_toy"
+            />
           </>
         ) : (
           <>

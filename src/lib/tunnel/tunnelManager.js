@@ -1,10 +1,23 @@
-import { loadState, saveState, generateShortId, clearPid } from "./state.js";
-import { spawnQuickTunnel, killCloudflared, isCloudflaredRunning, setUnexpectedExitHandler } from "./cloudflared.js";
 import { getSettings, updateSettings } from "@/lib/localDb";
 import { waitForHealth, probeUrlAlive } from "./networkProbe.js";
 
 const WORKER_URL = process.env.TUNNEL_WORKER_URL || "https://abc-tunnel.us";
 const IS_VERCEL = !!process.env.VERCEL;
+
+let _cloudflaredModule = null;
+async function getCloudflared() {
+  if (!_cloudflaredModule) {
+    _cloudflaredModule = await import("./cloudflared.js");
+  }
+  return _cloudflaredModule;
+}
+let _stateModule = null;
+async function getState() {
+  if (!_stateModule) {
+    _stateModule = await import("./state.js");
+  }
+  return _stateModule;
+}
 
 function normalizeEndpoint(url) {
   return url.replace(/\/$/, "");
@@ -33,9 +46,48 @@ export function getTunnelService() { return tunnelSvc; }
 export function isTunnelManuallyDisabled() { return tunnelSvc.cancelToken.cancelled; }
 export function isTunnelReconnecting() { return tunnelSvc.spawnInProgress; }
 
-// Callback invoked when cloudflared exits unexpectedly (set by initializeApp)
 let onTunnelUnexpectedExit = null;
 export function setTunnelUnexpectedExitCallback(cb) { onTunnelUnexpectedExit = cb; }
+
+// Dynamic wrappers for cloudflared exports (used by other modules)
+export async function isCloudflaredRunning() {
+  const cf = await getCloudflared();
+  return cf.isCloudflaredRunning();
+}
+export async function ensureCloudflared() {
+  const cf = await getCloudflared();
+  return cf.ensureCloudflared();
+}
+export async function killCloudflared(port) {
+  const cf = await getCloudflared();
+  return cf.killCloudflared(port);
+}
+export async function setUnexpectedExitHandler(handler) {
+  const cf = await getCloudflared();
+  return cf.setUnexpectedExitHandler(handler);
+}
+export function getDownloadStatus() {
+  if (_cloudflaredModule) return _cloudflaredModule.getDownloadStatus();
+  return { downloading: false, progress: 0 };
+}
+
+// Dynamic wrappers for state exports
+export async function loadState() {
+  const st = await getState();
+  return st.loadState();
+}
+export async function saveState(state) {
+  const st = await getState();
+  return st.saveState(state);
+}
+export async function clearState() {
+  const st = await getState();
+  return st.clearState();
+}
+export async function clearPid() {
+  const st = await getState();
+  return st.clearPid();
+}
 
 // ─── Cloudflare Tunnel ───────────────────────────────────────────────────────
 
@@ -67,12 +119,14 @@ export async function enableTunnel(localPort = 20261) {
   tunnelSvc.spawnInProgress = true;
   const token = tunnelSvc.cancelToken;
 
+  const cf = await getCloudflared();
+  const st = await getState();
+
   try {
-    if (isCloudflaredRunning()) {
-      const existing = loadState();
+    if (cf.isCloudflaredRunning()) {
+      const existing = st.loadState();
       if (existing?.tunnelUrl && existing?.shortId) {
         const publicUrl = `https://r${existing.shortId}.abc-tunnel.us`;
-        // Reuse only if BOTH direct + public URL alive (avoid stale socket after network change)
         const [directOk, publicOk] = await Promise.all([
           probeUrlAlive(existing.tunnelUrl),
           probeUrlAlive(publicUrl),
@@ -85,43 +139,40 @@ export async function enableTunnel(localPort = 20261) {
       }
     }
 
-    killCloudflared(localPort);
+    cf.killCloudflared(localPort);
     console.log("[Tunnel] killed existing cloudflared");
     throwIfCancelled(token, "tunnel");
 
-    const existing = loadState();
-    const shortId = existing?.shortId || generateShortId();
+    const existing = st.loadState();
+    const shortId = existing?.shortId || st.generateShortId();
 
     const onUrlUpdate = async (url) => {
       if (token.cancelled) return;
       console.log(`[Tunnel] url updated: ${url}`);
       await registerTunnelUrl(shortId, url);
-      saveState({ shortId, tunnelUrl: url });
+      st.saveState({ shortId, tunnelUrl: url });
       await updateSettings({ tunnelEnabled: true, tunnelUrl: url });
     };
 
-    // Register exit handler BEFORE spawn so it fires even on early exit
-    setUnexpectedExitHandler(() => {
+    cf.setUnexpectedExitHandler(() => {
       console.warn("[Tunnel] cloudflared exited unexpectedly, scheduling respawn");
       if (tunnelSvc.spawnInProgress) return;
       if (Date.now() - tunnelSvc.lastRestartAt < 5000) return;
       if (onTunnelUnexpectedExit) onTunnelUnexpectedExit();
     });
 
-    const { tunnelUrl } = await spawnQuickTunnel(localPort, onUrlUpdate);
+    const { tunnelUrl } = await cf.spawnQuickTunnel(localPort, onUrlUpdate);
     console.log(`[Tunnel] spawned: ${tunnelUrl}`);
     throwIfCancelled(token, "tunnel");
 
     const publicUrl = `https://r${shortId}.abc-tunnel.us`;
     await registerTunnelUrl(shortId, tunnelUrl);
-    saveState({ shortId, tunnelUrl });
+    st.saveState({ shortId, tunnelUrl });
     await updateSettings({ tunnelEnabled: true, tunnelUrl });
     console.log(`[Tunnel] registered shortId=${shortId} publicUrl=${publicUrl}`);
 
-    // Verify publicUrl first (worker route is reliable; direct *.trycloudflare.com DNS may lag)
     await waitForHealth(publicUrl, token);
     console.log("[Tunnel] public URL healthy");
-    // Direct tunnel probe is best-effort: DNS for *.trycloudflare.com can be slow/blocked on some networks
     if (!(await probeUrlAlive(tunnelUrl))) {
       console.warn("[Tunnel] direct URL not reachable yet, continuing via publicUrl");
     } else {
@@ -142,18 +193,19 @@ export async function disableTunnel() {
   if (IS_VERCEL) return { success: true, unsupported: true, publicUrl: vercelEndpoint() };
 
   console.log("[Tunnel] disable");
-  // Abort any in-flight enable so it cannot resurrect state after we clear it
+  const cf = await getCloudflared();
+  const st = await getState();
+
   tunnelSvc.cancelToken.cancelled = true;
-  setUnexpectedExitHandler(null);
+  cf.setUnexpectedExitHandler(null);
 
-  try { killCloudflared(tunnelSvc.activeLocalPort); } catch (e) { console.warn(`[Tunnel] kill warn: ${e.message}`); }
-  clearPid();
+  try { cf.killCloudflared(tunnelSvc.activeLocalPort); } catch (e) { console.warn(`[Tunnel] kill warn: ${e.message}`); }
+  st.clearPid();
 
-  const state = loadState();
-  if (state) saveState({ shortId: state.shortId, tunnelUrl: null });
+  const state = st.loadState();
+  if (state) st.saveState({ shortId: state.shortId, tunnelUrl: null });
 
   await updateSettings({ tunnelEnabled: false, tunnelUrl: "" });
-  // Force-clear flags so a subsequent enable is not blocked by a stuck spawnInProgress
   tunnelSvc.spawnInProgress = false;
   tunnelSvc.activeLocalPort = null;
   return { success: true };
@@ -173,15 +225,16 @@ export async function getTunnelStatus() {
     };
   }
 
+  const st = await getState();
   const settings = await getSettings();
   const settingsEnabled = settings.tunnelEnabled === true;
-  const state = loadState();
+  const state = st.loadState();
   const shortId = state?.shortId || "";
   const publicUrl = shortId ? `https://r${shortId}.abc-tunnel.us` : "";
   const tunnelUrl = state?.tunnelUrl || "";
 
-  // Lazy: skip PID probe entirely when user disabled tunnel
-  const running = settingsEnabled ? isCloudflaredRunning() : false;
+  const cf = await getCloudflared();
+  const running = settingsEnabled ? cf.isCloudflaredRunning() : false;
 
   return {
     enabled: settingsEnabled && running,
@@ -192,5 +245,3 @@ export async function getTunnelStatus() {
     running
   };
 }
-
-

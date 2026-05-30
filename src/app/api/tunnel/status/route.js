@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireTeamContext } from "@/lib/auth";
-import { getTunnelStatus } from "@/lib/tunnel/tunnelManager";
-import { getDownloadStatus } from "@/lib/tunnel/cloudflared";
+import { getTunnelStatus, getDownloadStatus } from "@/lib/tunnel/tunnelManager";
 
 export async function GET() {
   try {

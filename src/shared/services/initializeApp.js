@@ -7,9 +7,9 @@ import {
   enableTunnel,
   isTunnelManuallyDisabled, isTunnelReconnecting,
   getTunnelService, setTunnelUnexpectedExitCallback,
+  isCloudflaredRunning, killCloudflared, ensureCloudflared,
+  loadState, clearState,
 } from "@/lib/tunnel/tunnelManager";
-import { killCloudflared, isCloudflaredRunning, ensureCloudflared } from "@/lib/tunnel/cloudflared";
-import { loadState, clearState } from "@/lib/tunnel/state";
 import { checkInternet, probeUrlAlive } from "@/lib/tunnel/networkProbe";
 import {
   RESTART_COOLDOWN_MS, NETWORK_SETTLE_MS,
@@ -17,7 +17,6 @@ import {
 } from "@/lib/tunnel/tunnelConfig";
 import { updateSettings } from "@/lib/localDb";
 
-// Survive Next.js hot reload
 const g = global.__appSingleton ??= {
   signalHandlersRegistered: false,
   watchdogInterval: null,
@@ -33,7 +32,6 @@ export async function initializeApp() {
     await cleanupProviderConnections();
     const settings = await getSettings();
 
-    // Auto-resume tunnel (once per process)
     if (settings.tunnelEnabled && !g.tunnelAutoResumed) {
       g.tunnelAutoResumed = true;
       console.log("[InitApp] Tunnel was enabled, auto-resuming...");
@@ -41,28 +39,27 @@ export async function initializeApp() {
         await safeRestartTunnel("startup");
       } catch (e) {
         console.log("[InitApp] Tunnel resume failed:", e.message);
-        if (!isCloudflaredRunning()) {
+        if (!(await isCloudflaredRunning())) {
           console.log("[InitApp] Tunnel not running after resume attempt, clearing stale state");
           await updateSettings({ tunnelEnabled: false, tunnelUrl: "" });
-          clearState();
+          await clearState();
         }
       }
     }
 
     if (!g.signalHandlersRegistered) {
       const cleanup = () => {
-        killCloudflared();
+        killCloudflared().catch(() => {});
         process.exit();
       };
       process.on("SIGINT", cleanup);
       process.on("SIGTERM", cleanup);
-      process.on("exit", () => { try { /* clean exit */ } catch { /* ignore */ } });
+      process.on("exit", () => { try {} catch {} });
       g.signalHandlersRegistered = true;
     }
 
     ensureCloudflared().catch(() => {});
 
-    // Auto-respawn tunnel when cloudflared exits unexpectedly (e.g. network change drop)
     setTunnelUnexpectedExitCallback(() => {
       safeRestartTunnel("unexpected-exit").catch(() => {});
     });
@@ -74,21 +71,17 @@ export async function initializeApp() {
   }
 }
 
-// ─── Safe restart (4 guards: spawn / cooldown / alive / internet) ────────────
-
 async function safeRestartTunnel(reason) {
   const svc = getTunnelService();
   const settings = await getSettings();
   if (!settings.tunnelEnabled) return;
   if (svc.cancelToken.cancelled) return;
   if (svc.spawnInProgress) return;
-  // Bypass cooldown when process is dead (real respawn, not restart-loop guard)
-  const processDead = !isCloudflaredRunning();
+  const processDead = !(await isCloudflaredRunning());
   if (!processDead && Date.now() - svc.lastRestartAt < RESTART_COOLDOWN_MS) return;
 
-  // Alive check: process up + BOTH direct & public URL respond → skip
-  if (isCloudflaredRunning()) {
-    const state = loadState();
+  if (await isCloudflaredRunning()) {
+    const state = await loadState();
     const publicUrl = state?.shortId ? `https://r${state.shortId}.abc-tunnel.us` : null;
     const directUrl = state?.tunnelUrl || null;
     if (publicUrl && directUrl) {
@@ -119,8 +112,6 @@ function startWatchdog() {
   }, WATCHDOG_INTERVAL_MS);
   if (g.watchdogInterval.unref) g.watchdogInterval.unref();
 }
-
-// ─── Network monitor: detect IPv4 fingerprint change + sleep/wake ────────────
 
 function getNetworkFingerprint() {
   const interfaces = os.networkInterfaces();
@@ -154,17 +145,15 @@ function startNetworkMonitor() {
       const wasSleep = elapsed > NETWORK_CHECK_INTERVAL_MS * 6;
       if (networkChanged) g.lastNetworkFingerprint = currentFingerprint;
 
-      // Real reachability check (TCP 1.1.1.1:443) — not just interface presence
       const online = await checkInternet();
       const wasOffline = g.lastOnline === false;
       g.lastOnline = online;
 
-      if (!online) return; // no internet → idle, don't restart
+      if (!online) return;
 
-      const onlineEdge = wasOffline; // offline → online transition
+      const onlineEdge = wasOffline;
       if (!networkChanged && !wasSleep && !onlineEdge) return;
 
-      // Wait for DHCP/DNS to settle before probing
       await new Promise((r) => setTimeout(r, NETWORK_SETTLE_MS));
 
       const reason = onlineEdge ? "online"

@@ -10,6 +10,7 @@ import { writeAuditLog } from "@/lib/db";
 import { APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { AI_PROVIDERS, FREE_TIER_PROVIDERS, WEB_COOKIE_PROVIDERS, isOpenAICompatibleProvider, isAnthropicCompatibleProvider, isCustomEmbeddingProvider } from "@/shared/constants/providers";
 import { normalizeProviderId, normalizeProviderSpecificData } from "@/lib/providerNormalization";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,7 @@ export async function POST(request) {
     const ctx = await requireManagerContext();
     const body = await request.json();
     const provider = normalizeProviderId(body.provider);
+    log.info("PROVIDER", `Manager ${ctx.userId} creating connection for provider ${provider} in team ${ctx.teamId}`);
     const { apiKey, name, displayName, priority, globalPriority, defaultModel, testStatus } = body;
     const proxyConfig = normalizeProxyConfig(body);
     if (proxyConfig.error) {
@@ -170,6 +172,7 @@ export async function POST(request) {
       payload: { provider, name: connectionName },
     }).catch(() => {});
 
+    log.info("PROVIDER", `Created connection ${newConnection.id} for provider ${provider}`);
     return NextResponse.json({ connection: result }, { status: 201 });
   } catch (error) {
     if (error instanceof Response) return error;

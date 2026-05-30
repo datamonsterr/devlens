@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireManagerContext, requireTeamContext } from "@/lib/auth";
 import { getCombos, createCombo, getComboByName } from "@/lib/localDb";
 import { writeAuditLog } from "@/lib/db";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,8 @@ export async function POST(request) {
     const ctx = await requireManagerContext();
     const body = await request.json();
     const { name, models, kind } = body;
+
+    log.info("COMBO", `Manager ${ctx.userId} creating combo ${name} with ${models?.length || 0} models in team ${ctx.teamId}`);
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -54,6 +57,7 @@ export async function POST(request) {
       payload: { name, models: models?.length ?? 0 },
     }).catch(() => {});
 
+    log.info("COMBO", `Created combo ${combo.id} (${name}) with ${models?.length || 0} models`);
     return NextResponse.json(combo, { status: 201 });
   } catch (error) {
     console.log("Error creating combo:", error);

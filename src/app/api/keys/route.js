@@ -3,6 +3,7 @@ import { requireTeamContext } from "@/lib/auth";
 import { getAdapter } from "@/lib/db/driver";
 import { generateApiKey, hashApiKey } from "@/lib/apiKeyUtils";
 import { v4 as uuidv4 } from "uuid";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +26,7 @@ export async function GET() {
       );
     }
 
+    log.debug("KEYS", `Listed ${keys.length} keys for ${ctx.role} ${ctx.userId}`);
     return NextResponse.json({ keys: keys.map((k) => ({ ...k, isActive: k.isActive === 1 })) });
   } catch (error) {
     if (error instanceof Response) return error;
@@ -37,6 +39,7 @@ export async function POST(request) {
     const ctx = await requireTeamContext();
 
     if (ctx.role !== "developer") {
+      log.warn("KEYS", `Non-developer ${ctx.role} attempted to create key`);
       return NextResponse.json({ error: "Only developers can create API keys" }, { status: 403 });
     }
 
@@ -49,7 +52,6 @@ export async function POST(request) {
 
     const adapter = await getAdapter();
 
-    // Check key quota
     const settings = await adapter.get(
       `SELECT maxKeysPerDeveloper FROM teamSettings WHERE teamId = ?`,
       [ctx.teamId]
@@ -62,10 +64,10 @@ export async function POST(request) {
     );
 
     if (existing[0]?.count >= maxKeys) {
+      log.warn("KEYS", `Key limit ${maxKeys} reached for user ${ctx.userId}`);
       return NextResponse.json({ error: `API key limit reached (max ${maxKeys})` }, { status: 400 });
     }
 
-    // Check name uniqueness
     const dup = await adapter.get(
       `SELECT id FROM apiKeys WHERE userId = ? AND name = ? AND isActive = 1`,
       [ctx.userId, name]
@@ -84,6 +86,7 @@ export async function POST(request) {
       [keyId, keyHash, name, ctx.teamId, ctx.userId, now]
     );
 
+    log.info("KEYS", `Created key ${keyId} (${name}) masked=${log.maskKey(keyValue)} for user ${ctx.userId} team ${ctx.teamId}`);
     return NextResponse.json(
       { id: keyId, name, key: keyValue, createdAt: now },
       { status: 201 }

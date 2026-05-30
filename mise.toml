@@ -1,5 +1,5 @@
 [tools]
-node = "25.9.0"
+node = "22"
 # pnpm managed via corepack (bundled with Node); see package.json#packageManager
 java = "temurin-21"
 

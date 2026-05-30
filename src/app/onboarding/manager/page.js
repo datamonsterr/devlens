@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
+import { CreateOrganization } from "@clerk/nextjs";
 
 export default function ManagerOnboardingPage() {
   return (
@@ -8,7 +8,9 @@ export default function ManagerOnboardingPage() {
           <h1 className="text-3xl font-semibold text-text-main">Create team</h1>
           <p className="text-text-muted">Team managers create the Clerk Organization for Devlens.</p>
         </div>
-        <SignUp routing="hash" unsafeMetadata={{ role: "manager" }} afterSignUpUrl="/dashboard" />
+        <div className="flex justify-center">
+          <CreateOrganization routing="hash" afterCreateOrganizationUrl="/dashboard" />
+        </div>
       </div>
     </main>
   );

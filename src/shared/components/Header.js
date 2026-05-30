@@ -12,6 +12,7 @@ import { OAUTH_PROVIDERS, APIKEY_PROVIDERS } from "@/shared/constants/config";
 import { MEDIA_PROVIDER_KINDS, AI_PROVIDERS } from "@/shared/constants/providers";
 import { useRole } from "@/shared/hooks/useRole";
 import { translate } from "@/i18n/runtime";
+import { OrganizationSwitcher, UserButton, useClerk } from "@clerk/nextjs";
 
 const PAGE_MAP = [
   ["/dashboard/providers", { title: "Provider Connections", description: "Configure and monitor team provider connections", icon: "dns" }],
@@ -106,6 +107,7 @@ const getPageInfo = (pathname) => {
 export default function Header({ onMenuClick, showMenuButton = true }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { signOut } = useClerk();
   const { isManager, isDeveloper } = useRole();
   const [displayName, setDisplayName] = useState("");
   const [loginMethod, setLoginMethod] = useState("");
@@ -142,11 +144,8 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
 
   const handleLogout = async () => {
     try {
-      const res = await fetch("/api/auth/logout", { method: "POST" });
-      if (res.ok) {
-        router.push("/login");
-        router.refresh();
-      }
+      await signOut();
+      router.push("/");
     } catch (err) {
       console.error("Failed to logout:", err);
     }
@@ -234,6 +233,19 @@ export default function Header({ onMenuClick, showMenuButton = true }) {
           </button>
         )}
         <ThemeToggle />
+        <OrganizationSwitcher 
+          hidePersonal
+          afterCreateOrganizationUrl="/dashboard"
+          afterLeaveOrganizationUrl="/onboarding"
+          afterSelectOrganizationUrl="/dashboard"
+          appearance={{
+            elements: {
+              organizationSwitcherTrigger: "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-surface rounded-md px-2 py-1 flex items-center text-text-main",
+              organizationSwitcherTriggerIcon: "text-text-muted",
+              avatarBox: "w-6 h-6"
+            }
+          }}
+        />
         <HeaderMenu onLogout={handleLogout} />
       </div>
     </header>

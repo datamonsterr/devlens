@@ -22,10 +22,10 @@
 
 - [x] 3.1 Present the Clerk setup checklist and get user confirmation before running CLI setup commands
 - [x] 3.2 Check whether Clerk CLI exists with `command -v clerk && clerk --version`
-- [ ] 3.3 If Clerk CLI exists, run `clerk update --yes`
+- [x] 3.3 If Clerk CLI exists, run `clerk update --yes`
 - [x] 3.4 If Clerk CLI is missing, install it using the user's preferred package manager or `npm install -g clerk`
 - [x] 3.5 Run `clerk auth login` immediately after install/update and wait for user login flow if needed
-- [ ] 3.6 Run `clerk init --app app_3E8lz4sxdjUzfdcfua63yDGDuZy` from the existing project root
+- [x] 3.6 Run `clerk init --app app_3E8lz4sxdjUzfdcfua63yDGDuZy` from the existing project root
 - [x] 3.7 Inspect all files changed by Clerk CLI and keep only intended integration changes
 
 ## 4. Next.js proxy/middleware verification
@@ -68,10 +68,10 @@
 - [x] 8.3 Run `npm run lint`
 - [x] 8.4 Run `npm test` or existing documented test command
 - [x] 8.5 Start local app on `20261` if scripts/config are touched and verify auth controls are visible
-- [ ] 8.6 Test sign-up flow until profile icon appears
-- [ ] 8.7 If Clerk shows a "Configure your application" callout, tell the user to click it
-- [ ] 8.8 Test dashboard access signed out, signed in as Manager, and signed in as Developer where possible
-- [ ] 8.9 Test `/v1/*` request with API Key auth after Clerk migration
+- [x] 8.6 Test sign-up flow until profile icon appears
+- [x] 8.7 If Clerk shows a "Configure your application" callout, tell the user to click it
+- [x] 8.8 Test dashboard access signed out, signed in as Manager, and signed in as Developer where possible
+- [x] 8.9 Test `/v1/*` request with API Key auth after Clerk migration
 
 ## 9. Living specs sync
 

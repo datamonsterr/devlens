@@ -1,10 +1,28 @@
 "use client";
 
-import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/nextjs";
-import Link from "next/link";
+import { SignInButton, SignUpButton, UserButton, useUser, useClerk } from "@clerk/nextjs";
 
 export default function OnboardingPage() {
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
+  const clerk = useClerk();
+
+  const handleRoleSelection = async (role) => {
+    if (!isSignedIn) {
+      clerk.openSignUp({ unsafeMetadata: { role } });
+      return;
+    }
+    
+    // User is signed in but hasn't picked a role yet (legacy auth to clerk migration case)
+    try {
+      await user.update({
+        unsafeMetadata: { ...user.unsafeMetadata, role }
+      });
+      // Redirect to specific flow after setting role
+      window.location.href = role === "manager" ? '/onboarding/manager' : '/onboarding/developer';
+    } catch (e) {
+      console.error("Failed to update user role", e);
+    }
+  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-bg p-6">
@@ -33,16 +51,28 @@ export default function OnboardingPage() {
           <p className="mt-3 text-text-muted">Choose how you join your Team.</p>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Link href="/onboarding/manager" className="rounded-2xl border border-border bg-surface p-8 text-left hover:border-primary">
+          <div className="rounded-2xl border border-border bg-surface p-8 text-left h-full">
             <span className="material-symbols-outlined text-primary">admin_panel_settings</span>
             <h2 className="mt-4 text-xl font-semibold">Team manager</h2>
-            <p className="mt-2 text-sm text-text-muted">Create the Clerk Organization and configure Team AI access.</p>
-          </Link>
-          <Link href="/onboarding/developer" className="rounded-2xl border border-border bg-surface p-8 text-left hover:border-primary">
+            <p className="mt-2 text-sm text-text-muted mb-6">Create the Clerk Organization and configure Team AI access.</p>
+            <button 
+              onClick={() => handleRoleSelection("manager")}
+              className="w-full rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors"
+            >
+              Set Role to Manager
+            </button>
+          </div>
+          <div className="rounded-2xl border border-border bg-surface p-8 text-left h-full">
             <span className="material-symbols-outlined text-primary">person</span>
             <h2 className="mt-4 text-xl font-semibold">Team member</h2>
-            <p className="mt-2 text-sm text-text-muted">Join an existing organization from your manager&apos;s invitation.</p>
-          </Link>
+            <p className="mt-2 text-sm text-text-muted mb-6">Join an existing organization from your manager&apos;s invitation.</p>
+            <button 
+              onClick={() => handleRoleSelection("developer")}
+              className="w-full rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-text-main hover:border-primary transition-colors"
+            >
+              Set Role to Member
+            </button>
+          </div>
         </div>
       </div>
     </main>

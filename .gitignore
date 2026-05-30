@@ -77,3 +77,6 @@ scripts/agSniffer/*
 gitbooks/*
 gitbook/README.md
 .data
+
+# clerk configuration (can include secrets)
+/.clerk/

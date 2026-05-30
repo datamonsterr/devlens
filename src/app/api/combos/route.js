@@ -16,7 +16,8 @@ export async function GET() {
     const combos = await getCombos(ctx.teamId);
     return NextResponse.json({ combos });
   } catch (error) {
-    console.log("Error fetching combos:", error);
+    if (error instanceof Response) return error;
+    console.error("Error fetching combos:", error);
     return NextResponse.json({ error: "Failed to fetch combos" }, { status: 500 });
   }
 }
@@ -60,7 +61,8 @@ export async function POST(request) {
     log.info("COMBO", `Created combo ${combo.id} (${name}) with ${models?.length || 0} models`);
     return NextResponse.json(combo, { status: 201 });
   } catch (error) {
-    console.log("Error creating combo:", error);
+    if (error instanceof Response) return error;
+    console.error("Error creating combo:", error);
     return NextResponse.json({ error: "Failed to create combo" }, { status: 500 });
   }
 }

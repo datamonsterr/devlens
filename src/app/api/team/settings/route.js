@@ -22,7 +22,8 @@ export async function GET() {
     return NextResponse.json({ settings: { ...settings, data: JSON.parse(settings.data || "{}") } });
   } catch (error) {
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error getting team settings:", error);
+    return NextResponse.json({ error: "Failed to fetch team settings" }, { status: 500 });
   }
 }
 
@@ -44,6 +45,7 @@ export async function PUT(request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Error updating team settings:", error);
+    return NextResponse.json({ error: "Failed to update team settings" }, { status: 500 });
   }
 }

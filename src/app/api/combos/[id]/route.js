@@ -20,7 +20,8 @@ export async function GET(request, { params }) {
     
     return NextResponse.json(combo);
   } catch (error) {
-    console.log("Error fetching combo:", error);
+    if (error instanceof Response) return error;
+    console.error("Error fetching combo:", error);
     return NextResponse.json({ error: "Failed to fetch combo" }, { status: 500 });
   }
 }
@@ -69,7 +70,8 @@ export async function PUT(request, { params }) {
 
     return NextResponse.json(combo);
   } catch (error) {
-    console.log("Error updating combo:", error);
+    if (error instanceof Response) return error;
+    console.error("Error updating combo:", error);
     return NextResponse.json({ error: "Failed to update combo" }, { status: 500 });
   }
 }
@@ -100,7 +102,8 @@ export async function DELETE(request, { params }) {
     
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.log("Error deleting combo:", error);
+    if (error instanceof Response) return error;
+    console.error("Error deleting combo:", error);
     return NextResponse.json({ error: "Failed to delete combo" }, { status: 500 });
   }
 }

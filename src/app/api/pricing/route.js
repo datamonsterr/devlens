@@ -15,6 +15,7 @@ export async function GET() {
     const pricing = await getPricing();
     return NextResponse.json(pricing);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error fetching pricing:", error);
     return NextResponse.json(
       { error: "Failed to fetch pricing" },
@@ -91,6 +92,7 @@ export async function PATCH(request) {
     }
     return NextResponse.json(updatedPricing);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error updating pricing:", error);
     return NextResponse.json(
       { error: "Failed to update pricing" },
@@ -136,6 +138,7 @@ export async function DELETE(request) {
     }
     return NextResponse.json(pricing);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error resetting pricing:", error);
     return NextResponse.json(
       { error: "Failed to reset pricing" },

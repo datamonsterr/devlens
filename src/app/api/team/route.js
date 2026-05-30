@@ -21,7 +21,8 @@ export async function GET() {
     return NextResponse.json({ team, context: { userId: ctx.userId, role: ctx.role, isActive: ctx.isActive } });
   } catch (error) {
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("GET /api/team error:", error);
+    return NextResponse.json({ error: "Failed to fetch team" }, { status: 500 });
   }
 }
 
@@ -48,6 +49,7 @@ export async function PUT(request) {
     return NextResponse.json({ team });
   } catch (error) {
     if (error instanceof Response) return error;
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("PUT /api/team error:", error);
+    return NextResponse.json({ error: "Failed to update team" }, { status: 500 });
   }
 }

@@ -65,13 +65,15 @@ export async function createLibsqlAdapter({ url, authToken }) {
     exec,
     async transaction(fn) {
       return serialize(async () => {
-        await execute("BEGIN");
+        const sp = `tx_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
+        await execute(`SAVEPOINT ${sp}`);
         try {
           const result = await txStorage.run(true, fn);
-          await execute("COMMIT");
+          await execute(`RELEASE ${sp}`);
           return result;
         } catch (err) {
-          try { await execute("ROLLBACK"); } catch {}
+          try { await execute(`ROLLBACK TO ${sp}`); } catch {}
+          try { await execute(`RELEASE ${sp}`); } catch {}
           throw err;
         }
       });

@@ -47,6 +47,7 @@ export async function GET(request) {
     const stats = await getUsageStats(period);
     return NextResponse.json(stats);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("[API] Failed to get usage stats:", error);
     return NextResponse.json({ error: "Failed to fetch usage stats" }, { status: 500 });
   }

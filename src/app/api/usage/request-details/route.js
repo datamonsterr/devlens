@@ -52,6 +52,7 @@ export async function GET(request) {
     
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("[API] Failed to get request details:", error);
     return NextResponse.json(
       { error: "Failed to fetch request details" },

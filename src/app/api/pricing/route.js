@@ -81,14 +81,14 @@ export async function PATCH(request) {
 
     const updatedPricing = await updatePricing(body);
     if (ctx?.teamId) {
-      await writeAuditLog({
+      writeAuditLog({
         teamId: ctx.teamId,
         actorId: ctx.userId,
         actorRole: ctx.role,
         action: "update",
         resource: "pricingOverride",
         payload: { providers: Object.keys(body) },
-      }).catch(() => {});
+      }).catch((e) => console.warn("[Audit] write failed:", e?.message));
     }
     return NextResponse.json(updatedPricing);
   } catch (error) {
@@ -127,14 +127,14 @@ export async function DELETE(request) {
 
     const pricing = await getPricing();
     if (ctx?.teamId) {
-      await writeAuditLog({
+      writeAuditLog({
         teamId: ctx.teamId,
         actorId: ctx.userId,
         actorRole: ctx.role,
         action: "reset",
         resource: "pricingOverride",
         payload: { provider: provider || null, model: model || null },
-      }).catch(() => {});
+      }).catch((e) => console.warn("[Audit] write failed:", e?.message));
     }
     return NextResponse.json(pricing);
   } catch (error) {
@@ -156,6 +156,7 @@ export async function GET_DEFAULTS() {
     const defaultPricing = getDefaultPricing();
     return NextResponse.json(defaultPricing);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error fetching default pricing:", error);
     return NextResponse.json(
       { error: "Failed to fetch default pricing" },

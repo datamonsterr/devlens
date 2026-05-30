@@ -28,8 +28,14 @@ function isIgnorablePragmaError(sql, err) {
 export async function createLibsqlAdapter({ url, authToken }) {
   const client = createClient({ url, authToken });
 
+  const txStorage = new AsyncLocalStorage();
+
   async function execute(sql, params = []) {
     try {
+      const activeTx = txStorage.getStore();
+      if (activeTx) {
+        return await activeTx.execute({ sql, args: params });
+      }
       return await client.execute({ sql, args: params });
     } catch (err) {
       if (isIgnorablePragmaError(sql, err)) return { rows: [], rowsAffected: 0, lastInsertRowid: null };
@@ -38,12 +44,11 @@ export async function createLibsqlAdapter({ url, authToken }) {
   }
 
   let queue = Promise.resolve();
-  const txStorage = new AsyncLocalStorage();
 
   function serialize(operation) {
     if (txStorage.getStore()) return operation();
     const next = queue.then(operation, operation);
-    queue = next.catch(() => {});
+    queue = next.catch((err) => { if (err) console.debug("[DB] queue error swallowed:", err?.message); });
     return next;
   }
 
@@ -65,15 +70,13 @@ export async function createLibsqlAdapter({ url, authToken }) {
     exec,
     async transaction(fn) {
       return serialize(async () => {
-        const sp = `tx_${Math.random().toString(36).slice(2)}_${Date.now().toString(36)}`;
-        await execute(`SAVEPOINT ${sp}`);
+        const tx = await client.transaction("write");
         try {
-          const result = await txStorage.run(true, fn);
-          await execute(`RELEASE ${sp}`);
+          const result = await txStorage.run(tx, fn);
+          await tx.commit();
           return result;
         } catch (err) {
-          try { await execute(`ROLLBACK TO ${sp}`); } catch {}
-          try { await execute(`RELEASE ${sp}`); } catch {}
+          try { await tx.rollback(); } catch {}
           throw err;
         }
       });

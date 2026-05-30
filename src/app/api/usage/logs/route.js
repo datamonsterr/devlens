@@ -9,6 +9,7 @@ export async function GET() {
     const logs = await getRecentLogs(200, filter);
     return NextResponse.json(logs);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error fetching logs:", error);
     return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });
   }

@@ -9,12 +9,13 @@ import {
   getTunnelService, setTunnelUnexpectedExitCallback,
 } from "@/lib/tunnel/tunnelManager";
 import { killCloudflared, isCloudflaredRunning, ensureCloudflared } from "@/lib/tunnel/cloudflared";
-import { loadState } from "@/lib/tunnel/state";
+import { loadState, clearState } from "@/lib/tunnel/state";
 import { checkInternet, probeUrlAlive } from "@/lib/tunnel/networkProbe";
 import {
   RESTART_COOLDOWN_MS, NETWORK_SETTLE_MS,
   WATCHDOG_INTERVAL_MS, NETWORK_CHECK_INTERVAL_MS,
 } from "@/lib/tunnel/tunnelConfig";
+import { updateSettings } from "@/lib/localDb";
 
 // Survive Next.js hot reload
 const g = global.__appSingleton ??= {
@@ -36,7 +37,16 @@ export async function initializeApp() {
     if (settings.tunnelEnabled && !g.tunnelAutoResumed) {
       g.tunnelAutoResumed = true;
       console.log("[InitApp] Tunnel was enabled, auto-resuming...");
-      safeRestartTunnel("startup").catch((e) => console.log("[InitApp] Tunnel resume failed:", e.message));
+      try {
+        await safeRestartTunnel("startup");
+      } catch (e) {
+        console.log("[InitApp] Tunnel resume failed:", e.message);
+        if (!isCloudflaredRunning()) {
+          console.log("[InitApp] Tunnel not running after resume attempt, clearing stale state");
+          await updateSettings({ tunnelEnabled: false, tunnelUrl: "" });
+          clearState();
+        }
+      }
     }
 
     if (!g.signalHandlersRegistered) {

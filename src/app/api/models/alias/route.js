@@ -12,6 +12,7 @@ export async function GET() {
     const aliases = await getModelAliases(ctx.teamId);
     return NextResponse.json({ aliases });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error fetching aliases:", error);
     return NextResponse.json({ error: "Failed to fetch aliases" }, { status: 500 });
   }
@@ -30,7 +31,7 @@ export async function PUT(request) {
 
     await setModelAlias(alias, model, ctx.teamId);
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
@@ -38,10 +39,11 @@ export async function PUT(request) {
       resource: "modelAlias",
       resourceId: alias,
       payload: { alias, model },
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     return NextResponse.json({ success: true, model, alias });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error updating alias:", error);
     return NextResponse.json({ error: "Failed to update alias" }, { status: 500 });
   }
@@ -60,17 +62,18 @@ export async function DELETE(request) {
 
     await deleteModelAlias(alias, ctx.teamId);
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
       action: "delete",
       resource: "modelAlias",
       resourceId: alias,
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error deleting alias:", error);
     return NextResponse.json({ error: "Failed to delete alias" }, { status: 500 });
   }

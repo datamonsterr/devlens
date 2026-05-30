@@ -10,7 +10,9 @@ export async function GET() {
     const download = getDownloadStatus();
     return NextResponse.json({ tunnel, download });
   } catch (error) {
+    const msg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null ? 'Authentication required' : String(error));
     console.error("Tunnel status error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Response) return error;
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

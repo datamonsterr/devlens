@@ -167,8 +167,10 @@ export async function GET(req, { params }) {
 
     return Response.json(usage);
   } catch (error) {
+    if (error instanceof Response) return error;
+    const msg = error instanceof Error ? error.message : String(error);
     const provider = connection?.provider ?? "unknown";
-    console.warn(`[Usage] ${provider}: ${error.message}`);
-    return Response.json({ error: error.message }, { status: 500 });
+    console.warn(`[Usage] ${provider}: ${msg}`);
+    return Response.json({ error: msg }, { status: 500 });
   }
 }

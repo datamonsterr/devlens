@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -27,6 +28,8 @@ function base64UrlToBytes(value: string) {
 
 async function hasDashboardSession(req: Request) {
   const token = req.headers.get("cookie")?.match(/(?:^|; )auth_token=([^;]+)/)?.[1];
+  // Note: Edge runtime cannot load the file-based fallback secret (fs/path unavailable).
+  // Always set JWT_SECRET in environment variables for dashboard auth to work.
   const secret = process.env.JWT_SECRET;
   if (!token || !secret) return false;
   try {
@@ -54,7 +57,13 @@ async function hasDashboardSession(req: Request) {
 }
 
 export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req) && !auth.userId && !(await hasDashboardSession(req))) {
+  if (isPublicRoute(req)) return;
+  const userId = auth.userId;
+  const hasSession = await hasDashboardSession(req);
+  if (!userId && !hasSession) {
+    if (req.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     await auth.protect();
   }
 });

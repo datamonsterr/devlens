@@ -38,11 +38,14 @@ export async function DELETE(request, { params }) {
 
     const adapter = await getAdapter();
 
+    let result;
     if (ctx.role === "manager") {
-      await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND teamId = ?`, [id, ctx.teamId]);
+      result = await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND teamId = ?`, [id, ctx.teamId]);
     } else {
-      await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND userId = ?`, [id, ctx.userId]);
+      result = await adapter.run(`UPDATE apiKeys SET isActive = 0 WHERE id = ? AND userId = ?`, [id, ctx.userId]);
     }
+
+    if (result.changes === 0) return NextResponse.json({ error: "Key not found" }, { status: 404 });
 
     return NextResponse.json({ success: true });
   } catch (error) {

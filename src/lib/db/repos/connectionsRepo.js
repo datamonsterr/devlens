@@ -121,6 +121,11 @@ export async function createProviderConnection(data) {
     // access_token: never dedup — user manages duplicates manually
 
     if (existing) {
+      if (data.authType === "apikey" && !data.force) {
+        const err = new Error("Connection with this name already exists");
+        err.code = "DUPLICATE_NAME";
+        throw err;
+      }
       const merged = { ...existing, ...data, updatedAt: now };
       await upsert(db, merged);
       result = merged;

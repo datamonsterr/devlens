@@ -9,6 +9,7 @@ export async function GET(req) {
     const logs = await getRecentLogs(200, filter);
     return NextResponse.json(logs);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("[API ERROR] /api/usage/logs failed:", error);
     console.error("[API ERROR] Stack:", error?.stack);
     return NextResponse.json({ error: "Failed to fetch logs" }, { status: 500 });

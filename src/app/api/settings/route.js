@@ -34,7 +34,16 @@ export async function GET() {
 export async function PATCH(request) {
   try {
     await assertManager();
-    const body = await request.json();
+    const text = await request.text();
+    let body;
+    try {
+      body = text ? JSON.parse(text) : {};
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    if (Object.keys(body).length === 0) {
+      return NextResponse.json({ error: "No settings to update" }, { status: 400 });
+    }
 
     if (body.newPassword) {
       delete body.newPassword;

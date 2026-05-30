@@ -85,14 +85,14 @@ export async function PUT(request) {
 
     const updated = await adapter.get(`SELECT rtkPool FROM teams WHERE id = ?`, [ctx.teamId]);
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
       action: mode === "reset" ? "reset" : "topup",
       resource: "rtkPool",
       payload: { amount, mode: mode || "topup", newPool: updated.rtkPool },
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     return NextResponse.json({
       rtkPool: updated.rtkPool,

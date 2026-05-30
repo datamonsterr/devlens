@@ -133,7 +133,7 @@ export async function PUT(request, { params }) {
     delete result.refreshToken;
     delete result.idToken;
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
@@ -141,7 +141,7 @@ export async function PUT(request, { params }) {
       resource: "providerConnection",
       resourceId: id,
       payload: { fields: Object.keys(updateData) },
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     return NextResponse.json({ connection: result });
   } catch (error) {
@@ -163,7 +163,7 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ error: "Connection not found" }, { status: 404 });
     }
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
@@ -171,7 +171,7 @@ export async function DELETE(request, { params }) {
       resource: "providerConnection",
       resourceId: id,
       payload: { provider: conn?.provider, name: conn?.name },
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     return NextResponse.json({ message: "Connection deleted successfully" });
   } catch (error) {

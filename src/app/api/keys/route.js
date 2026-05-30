@@ -21,7 +21,7 @@ export async function GET() {
       );
     } else {
       keys = await adapter.all(
-        `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE userId = ? ORDER BY createdAt DESC`,
+        `SELECT id, name, isActive, lastUsedAt, createdAt FROM apiKeys WHERE userId = ? AND isActive = 1 ORDER BY createdAt DESC`,
         [ctx.userId]
       );
     }
@@ -48,6 +48,10 @@ export async function POST(request) {
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    }
+
+    if (name.length > 100) {
+      return NextResponse.json({ error: "Name must be 100 characters or less" }, { status: 400 });
     }
 
     const adapter = await getAdapter();

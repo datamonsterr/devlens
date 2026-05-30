@@ -162,7 +162,7 @@ export async function POST(request) {
     const result = { ...newConnection };
     delete result.apiKey;
 
-    await writeAuditLog({
+    writeAuditLog({
       teamId: ctx.teamId,
       actorId: ctx.userId,
       actorRole: ctx.role,
@@ -170,12 +170,15 @@ export async function POST(request) {
       resource: "providerConnection",
       resourceId: newConnection.id,
       payload: { provider, name: connectionName },
-    }).catch(() => {});
+    }).catch((e) => console.warn("[Audit] write failed:", e?.message));
 
     log.info("PROVIDER", `Created connection ${newConnection.id} for provider ${provider}`);
     return NextResponse.json({ connection: result }, { status: 201 });
   } catch (error) {
     if (error instanceof Response) return error;
+    if (error.code === "DUPLICATE_NAME") {
+      return NextResponse.json({ error: error.message }, { status: 409 });
+    }
     console.error("Error creating provider:", error);
     return NextResponse.json({ error: "Failed to create provider" }, { status: 500 });
   }

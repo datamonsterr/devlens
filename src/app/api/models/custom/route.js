@@ -11,6 +11,7 @@ export async function GET() {
     const models = await getCustomModels(ctx.teamId);
     return NextResponse.json({ models });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error fetching custom models:", error);
     return NextResponse.json({ error: "Failed to fetch custom models" }, { status: 500 });
   }
@@ -27,6 +28,7 @@ export async function POST(request) {
     const added = await addCustomModel({ teamId: ctx.teamId, providerAlias, id, type: type || "llm", name });
     return NextResponse.json({ success: true, added });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error adding custom model:", error);
     return NextResponse.json({ error: "Failed to add custom model" }, { status: 500 });
   }
@@ -46,6 +48,7 @@ export async function DELETE(request) {
     await deleteCustomModel({ teamId: ctx.teamId, providerAlias, id, type });
     return NextResponse.json({ success: true });
   } catch (error) {
+    if (error instanceof Response) return error;
     console.log("Error deleting custom model:", error);
     return NextResponse.json({ error: "Failed to delete custom model" }, { status: 500 });
   }

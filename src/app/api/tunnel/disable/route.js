@@ -8,7 +8,9 @@ export async function POST() {
     const result = await disableTunnel();
     return NextResponse.json(result);
   } catch (error) {
+    const msg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null ? 'Authentication required' : String(error));
     console.error("Tunnel disable error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Response) return error;
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

@@ -17,6 +17,7 @@ export async function GET(request) {
     const history = await getUsageHistory(filter);
     return NextResponse.json(history);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("Error fetching usage history:", error);
     return NextResponse.json({ error: "Failed to fetch usage history" }, { status: 500 });
   }

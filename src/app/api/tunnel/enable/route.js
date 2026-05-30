@@ -13,7 +13,9 @@ export async function POST() {
     await new Promise((r) => setTimeout(r, DNS_WARMUP_DELAY_MS));
     return NextResponse.json(result);
   } catch (error) {
+    const msg = error instanceof Error ? error.message : (typeof error === 'object' && error !== null ? 'Authentication required' : String(error));
     console.error("Tunnel enable error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error instanceof Response) return error;
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

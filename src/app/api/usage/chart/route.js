@@ -38,6 +38,7 @@ export async function GET(request) {
     const data = await getChartData(period);
     return NextResponse.json(data);
   } catch (error) {
+    if (error instanceof Response) return error;
     console.error("[API] Failed to get chart data:", error);
     return NextResponse.json({ error: "Failed to fetch chart data" }, { status: 500 });
   }

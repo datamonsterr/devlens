@@ -103,6 +103,8 @@ export async function enableTunnel(localPort = 20261) {
     // Register exit handler BEFORE spawn so it fires even on early exit
     setUnexpectedExitHandler(() => {
       console.warn("[Tunnel] cloudflared exited unexpectedly, scheduling respawn");
+      if (tunnelSvc.spawnInProgress) return;
+      if (Date.now() - tunnelSvc.lastRestartAt < 5000) return;
       if (onTunnelUnexpectedExit) onTunnelUnexpectedExit();
     });
 

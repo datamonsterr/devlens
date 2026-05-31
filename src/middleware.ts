@@ -8,6 +8,10 @@ const isPublicRoute = createRouteMatcher([
   "/onboarding(.*)",
   "/sign-in(.*)",
   "/sign-up(.*)",
+  "/manifest.webmanifest",
+  "/icons(.*)",
+  "/i18n(.*)",
+  "/favicon.svg",
   "/api/v1(.*)",
   "/api/v1beta(.*)",
   "/api/health",
@@ -30,8 +34,8 @@ async function hasDashboardSession(req: Request) {
   const token = req.headers.get("cookie")?.match(/(?:^|; )auth_token=([^;]+)/)?.[1];
   // Note: Edge runtime cannot load the file-based fallback secret (fs/path unavailable).
   // Always set JWT_SECRET in environment variables for dashboard auth to work.
-  const secret = process.env.JWT_SECRET;
-  if (!token || !secret) return false;
+  const secret = process.env.JWT_SECRET || "devlens-local-dev-secret";
+  if (!token) return false;
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return false;
@@ -70,7 +74,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|webmanifest|json)$).*)",
     "/",
     "/(api|trpc)(.*)",
     "/__clerk/(.*)",

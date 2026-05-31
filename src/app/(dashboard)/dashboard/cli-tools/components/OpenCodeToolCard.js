@@ -107,10 +107,10 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
-  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
+  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/api/v1`;
 
   const checkStatus = async () => {
     setChecking(true);

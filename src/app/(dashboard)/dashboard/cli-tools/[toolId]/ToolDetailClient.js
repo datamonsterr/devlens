@@ -22,6 +22,7 @@ export default function ToolDetailClient({ toolId, machineId }) {
   const [cloudEnabled, setCloudEnabled] = useState(false);
   const [tunnelEnabled, setTunnelEnabled] = useState(false);
   const [tunnelPublicUrl, setTunnelPublicUrl] = useState("");
+  const [tunnelUrl, setTunnelUrl] = useState("");
   const [apiKeys, setApiKeys] = useState([]);
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export default function ToolDetailClient({ toolId, machineId }) {
           const data = await tunnelRes.json();
           setTunnelEnabled(!!(data.tunnel?.enabled || data.tunnel?.settingsEnabled));
           setTunnelPublicUrl(data.tunnel?.publicUrl || "");
+          setTunnelUrl(data.tunnel?.tunnelUrl || "");
         }
         if (keysRes.ok) {
           const data = await keysRes.json();
@@ -89,6 +91,7 @@ export default function ToolDetailClient({ toolId, machineId }) {
   }, []);
 
   const getBaseUrl = () => {
+    if (tunnelEnabled && tunnelUrl) return tunnelUrl;
     if (tunnelEnabled && tunnelPublicUrl) return tunnelPublicUrl;
     if (cloudEnabled && CLOUD_URL) return CLOUD_URL;
     if (typeof window !== "undefined") return window.location.origin;
@@ -106,6 +109,7 @@ export default function ToolDetailClient({ toolId, machineId }) {
       apiKeys,
       tunnelEnabled,
       tunnelPublicUrl,
+      tunnelUrl,
     };
 
     switch (toolId) {

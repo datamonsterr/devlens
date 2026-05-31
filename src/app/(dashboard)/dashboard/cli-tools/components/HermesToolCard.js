@@ -105,7 +105,7 @@ export default function HermesToolCard({
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || getLocalBaseUrl();
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
   const handleApply = async () => {

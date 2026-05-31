@@ -55,11 +55,11 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
   const configStatus = getConfigStatus();
 
   const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || `${baseUrl}/v1`;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    const url = customBaseUrl || `${baseUrl}/api/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
-  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
+  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/api/v1`;
 
   const checkStatus = async () => {
     setChecking(true);

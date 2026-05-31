@@ -142,7 +142,7 @@ export default function KeysPage() {
           <p className="mt-1 text-sm text-text-muted">
             {isManager
               ? "Team-wide API Key metadata and operational controls"
-              : "Create and manage your own API Keys for /v1/* access"}
+              : "Create and manage your own API Keys for /api/v1/* access"}
           </p>
         </div>
         {isDeveloper && (
@@ -191,7 +191,7 @@ export default function KeysPage() {
           <div className="flex flex-col gap-3">
             <div>
               <h2 className="text-lg font-medium">API access</h2>
-              <p className="text-sm text-text-muted mt-1">Use this base URL with your API Key for /v1/* requests.</p>
+              <p className="text-sm text-text-muted mt-1">Use this base URL with your API Key for /api/v1/* requests.</p>
             </div>
             <div>
               <label className="block text-xs font-medium text-text-muted mb-1">API Base URL</label>
@@ -223,7 +223,7 @@ export default function KeysPage() {
             <h3 className="text-lg font-medium">No API Keys</h3>
             <p className="mt-2 text-sm text-text-muted">
               {isDeveloper
-                ? "Create your first API Key to start calling /v1/* endpoints."
+                ? "Create your first API Key to start calling /api/v1/* endpoints."
                 : "No Developer API Keys have been created yet."}
             </p>
             {isDeveloper && (

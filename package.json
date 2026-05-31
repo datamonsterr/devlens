@@ -5,10 +5,10 @@
   "private": true,
   "packageManager": "pnpm@10.33.0",
   "scripts": {
-    "dev": "cross-env JWT_SECRET=devlens-local-dev-secret next dev --webpack --port 20262",
+    "dev": "cross-env JWT_SECRET=devlens-local-dev-secret next dev --webpack -H 0.0.0.0 --port 20262",
     "build": "next build --webpack",
     "start": "next start",
-    "dev:bun": "JWT_SECRET=${JWT_SECRET:-devlens-local-dev-secret} bun --bun next dev --webpack --port 20262",
+    "dev:bun": "JWT_SECRET=${JWT_SECRET:-devlens-local-dev-secret} bun --bun next dev --webpack -H 0.0.0.0 --port 20262",
     "build:bun": "bun --bun next build --webpack",
     "start:bun": "bun ./.next/standalone/server.js",
     "lint": "eslint src/ --ext .js,.jsx,.ts,.tsx 2>&1 || true",

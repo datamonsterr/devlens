@@ -273,6 +273,45 @@ export async function spawnCloudflared(tunnelToken) {
 export async function spawnQuickTunnel(localPort, onUrlUpdate) {
   const binaryPath = await ensureCloudflared();
 
+  // Protocol fallback order when rate-limited: http2 → quic → auto
+  const requestedProtocol = String(process.env.TUNNEL_TRANSPORT_PROTOCOL || process.env.CLOUDFLARED_PROTOCOL || "").trim().toLowerCase();
+  const envProtocol = QUICK_TUNNEL_PROTOCOLS.has(requestedProtocol) ? requestedProtocol : null;
+  const protocolOrder = envProtocol
+    ? [envProtocol]
+    : ["http2", "quic", "auto"];
+  const alreadyTried = new Set();
+  let lastError = null;
+
+  for (const protocol of protocolOrder) {
+    if (alreadyTried.has(protocol)) continue;
+    alreadyTried.add(protocol);
+    console.log(`[Tunnel] trying protocol=${protocol} port=${localPort}`);
+
+    try {
+      const result = await spawnQuickTunnelOnce(binaryPath, localPort, onUrlUpdate, protocol);
+      return result;
+    } catch (e) {
+      lastError = e;
+      if (!e.isRateLimit) throw e; // non-rate-limit errors: don't retry
+      console.warn(`[Tunnel] rate-limited on ${protocol}, trying next protocol after delay`);
+      // Backoff between protocol attempts (Cloudflare rate-limit window ~1s-60s)
+      await new Promise((r) => setTimeout(r, 10000));
+    }
+  }
+
+  throw lastError || new Error("Quick tunnel failed: all protocols exhausted");
+}
+
+class TunnelRateLimitError extends Error {
+  constructor(message, logTail) {
+    super(message);
+    this.name = "TunnelRateLimitError";
+    this.isRateLimit = true;
+    this.logTail = logTail;
+  }
+}
+
+async function spawnQuickTunnelOnce(binaryPath, localPort, onUrlUpdate, protocol) {
   const configDir = fs.mkdtempSync(path.join(os.tmpdir(), "cloudflared-quick-"));
   const configPath = path.join(configDir, "config.yml");
   // Avoid using default ~/.cloudflared/config.yml, which can conflict with quick tunnel behavior.
@@ -287,15 +326,13 @@ export async function spawnQuickTunnel(localPort, onUrlUpdate) {
     } catch (e) { /* ignore */ }
   };
 
-  const requestedProtocol = String(process.env.TUNNEL_TRANSPORT_PROTOCOL || process.env.CLOUDFLARED_PROTOCOL || DEFAULT_QUICK_TUNNEL_PROTOCOL).trim().toLowerCase();
-  const tunnelProtocol = QUICK_TUNNEL_PROTOCOLS.has(requestedProtocol) ? requestedProtocol : DEFAULT_QUICK_TUNNEL_PROTOCOL;
   const child = spawn(binaryPath, ["tunnel", "--url", `http://127.0.0.1:${localPort}`, "--config", configPath, "--no-autoupdate", "--retries", "99"], {
     detached: false,
     windowsHide: true,
     cwd: os.tmpdir(),
     env: {
       ...process.env,
-      TUNNEL_TRANSPORT_PROTOCOL: tunnelProtocol,
+      TUNNEL_TRANSPORT_PROTOCOL: protocol,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -379,7 +416,17 @@ export async function spawnQuickTunnel(localPort, onUrlUpdate) {
         cleanup();
         const tail = logTail.slice(-600).trim() || "(empty)";
         if (code === 1) {
-          reject(new Error(`cloudflared quick tunnel exited (code 1). Common causes: (1) outbound port 7844 (TCP/UDP) blocked, (2) TryCloudflare service issue, (3) cannot reach 127.0.0.1:${localPort}, (4) protocol (http2/quic) blocked by network. Last log: ${tail}`));
+          // Detect Cloudflare rate-limiting (error 1015 / 429)
+          const isRateLimit = /1015|429|rate.limit|too many requests/i.test(tail);
+          const err = isRateLimit
+            ? new TunnelRateLimitError(
+                `Cloudflare rate-limited quick tunnels (error 1015). Protocol: ${protocol}. Retrying with fallback...`,
+                tail
+              )
+            : new Error(
+                `cloudflared quick tunnel exited (code 1). Common causes: (1) outbound port 7844 (TCP/UDP) blocked, (2) TryCloudflare service issue, (3) cannot reach 127.0.0.1:${localPort}, (4) protocol (${protocol}) blocked by network. Last log: ${tail}`
+              );
+          reject(err);
         } else if (code === 2) {
           reject(new Error(`cloudflared exited (code 2). Bad arguments. Last log: ${tail}`));
         } else {

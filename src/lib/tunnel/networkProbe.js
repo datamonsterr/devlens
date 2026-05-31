@@ -29,13 +29,16 @@ async function resolveDns(hostname, timeoutMs) {
   // Try custom public DNS first (bypasses negative-cached NXDOMAIN on macOS).
   // Fall back to OS resolver for hostnames blocked or unsupported by Cloudflare DNS
   // (e.g. *.ts.net not always resolvable via 1.1.1.1).
-  const tryResolver = (fn) => Promise.race([
+  const tryResolver = (fn, label) => Promise.race([
     fn(),
     new Promise((_, rej) => setTimeout(() => rej(new Error("dns timeout")), timeoutMs)),
-  ]).then(() => true).catch(() => false);
+  ]).then(() => true).catch((e) => {
+    if (label) console.log(`[Tunnel] DNS ${label} failed for ${hostname}: ${e.message}`);
+    return false;
+  });
 
-  if (await tryResolver(() => resolver.resolve4(hostname))) return true;
-  return tryResolver(() => dns.promises.resolve4(hostname));
+  if (await tryResolver(() => resolver.resolve4(hostname), "custom")) return true;
+  return tryResolver(() => dns.promises.resolve4(hostname), "os");
 }
 
 // Single health probe: DNS via 1.1.1.1 → fetch /api/health
@@ -44,25 +47,30 @@ export async function probeUrlAlive(url) {
   let hostname;
   try { hostname = new URL(url).hostname; } catch { return false; }
 
-  if (!await resolveDns(hostname, HEALTH_CHECK.dnsTimeoutMs)) return false;
+  const dnsOk = await resolveDns(hostname, HEALTH_CHECK.dnsTimeoutMs);
+  if (!dnsOk) {
+    console.warn(`[Tunnel] DNS resolution failed for ${hostname}`);
+    return false;
+  }
 
   try {
     const res = await fetch(`${url}/api/health`, {
       signal: AbortSignal.timeout(HEALTH_CHECK.fetchTimeoutMs),
     });
     return res.ok;
-  } catch {
+  } catch (e) {
+    console.warn(`[Tunnel] health fetch failed for ${url}: ${e.message}`);
     return false;
   }
 }
 
 // Poll until tunnel responds /api/health, or timeout. Cancellable via token.
-export async function waitForHealth(url, cancelToken = { cancelled: false }) {
+export async function waitForHealth(url, cancelToken = { cancelled: false }, timeoutMs = HEALTH_CHECK.timeoutMs) {
   const start = Date.now();
-  while (Date.now() - start < HEALTH_CHECK.timeoutMs) {
+  while (Date.now() - start < timeoutMs) {
     if (cancelToken.cancelled) throw new Error("cancelled");
     if (await probeUrlAlive(url)) return true;
     await new Promise((r) => setTimeout(r, HEALTH_CHECK.intervalMs));
   }
-  throw new Error(`Health check timeout after ${HEALTH_CHECK.timeoutMs}ms`);
+  throw new Error(`Health check timeout after ${timeoutMs}ms`);
 }

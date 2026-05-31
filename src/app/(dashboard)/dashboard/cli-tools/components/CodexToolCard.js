@@ -74,12 +74,11 @@ export default function CodexToolCard({ tool, isExpanded, onToggle, baseUrl, api
   const configStatus = getConfigStatus();
 
   const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || `${baseUrl}/v1`;
-    // Ensure URL ends with /v1
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    const url = customBaseUrl || `${baseUrl}/api/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
-  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
+  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/api/v1`;
 
   const checkCodexStatus = async () => {
     setCheckingCodex(true);

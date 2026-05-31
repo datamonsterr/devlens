@@ -25,7 +25,7 @@ const PAGE_MAP = [
   ["/dashboard/profile", { title: "Account Settings", description: "Manage personal and Team-level dashboard settings", icon: "settings" }],
   ["/dashboard/pricing", { title: "Pricing Overrides", description: "Set and audit model-level pricing behavior", icon: "sell" }],
   ["/dashboard/team", { title: "Team Management", description: "Invite Developers and manage Team membership", icon: "groups" }],
-  ["/dashboard/keys", { title: "API Keys", description: "Manage Developer API Keys for /v1/* access", icon: "key" }],
+  ["/dashboard/keys", { title: "API Keys", description: "Manage Developer API Keys for /api/v1/* access", icon: "key" }],
   ["/dashboard/models", { title: "Model Browser", description: "Browse available models, providers, and Combos", icon: "hub" }],
   ["/dashboard/console-log", { title: "Console Log", description: "Live application logs for debugging and support", icon: "monitor" }],
   ["/dashboard/translator", { title: "Translator", description: "Debug translation between API payload formats", icon: "translate" }],

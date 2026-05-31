@@ -8,11 +8,11 @@ import ApiKeySelect from "./ApiKeySelect";
 
 const ENDPOINT = "/api/cli-tools/cowork-settings";
 
-const stripV1 = (url) => (url || "").replace(/\/v1\/?$/, "");
+const stripV1 = (url) => (url || "").replace(/\/api\/v1\/?$/, "");
 const ensureV1 = (url) => {
   const trimmed = (url || "").replace(/\/+$/, "");
   if (!trimmed) return "";
-  return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
+  return /\/api\/v1$/.test(trimmed) ? trimmed : `${trimmed}/api/v1`;
 };
 
 export default function CoworkToolCard({
@@ -231,7 +231,7 @@ export default function CoworkToolCard({
     const modelsToShow = selectedModels.length > 0 ? selectedModels : ["provider/model-id"];
     const cfg = {
       inferenceProvider: "gateway",
-      inferenceGatewayBaseUrl: getEffectiveBaseUrl() || "https://your-public-host/v1",
+      inferenceGatewayBaseUrl: getEffectiveBaseUrl() || "https://your-public-host/api/v1",
       inferenceGatewayApiKey: keyToUse,
       inferenceModels: modelsToShow.map((name) => ({ name })),
     };

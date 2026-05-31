@@ -33,11 +33,16 @@ The `libsqlAdapter` implements transactions using `BEGIN`/`COMMIT` with separate
 
 ---
 
-## BUG-2: Tunnel enable hangs for 3 minutes on health probe (HIGH)
+## BUG-2: Tunnel enable hangs for 3 minutes on health probe (HIGH) — FIXED
 
 **Root Cause**: `src/lib/tunnel/tunnelManager.js` calls `waitForHealth(publicUrl, token)` after spawning cloudflared. `networkProbe.js` polls `https://r{shortId}.abc-tunnel.us/api/health` with `timeoutMs: 180000` (3 min). If the worker URL is unreachable, the entire `POST /api/tunnel/enable` request blocks for 3 minutes.
 
-**Fix**: Reduce health probe timeout to 30s. Return intermediate response with `pending: true` if probe hasn't completed. Or make health probe non-blocking — return `success: true` immediately after spawn, let health check run async.
+**Fix applied**: 
+1. `waitForHealth` now accepts optional `timeoutMs` parameter (defaults to `HEALTH_CHECK.timeoutMs`).
+2. `enableTunnel` checks **tunnel URL** (trycloudflare.com) first — responds immediately after spawn.
+3. Public URL health check uses 15s timeout (not 180s), runs as best-effort. Fails gracefully with warning log.
+4. Only throws if **both** tunnel URL and public URL are unhealthy.
+5. Added diagnostic logging to `probeUrlAlive` and `resolveDns` for DNS/fetch failures.
 
 ---
 
@@ -195,7 +200,7 @@ These modules and operations were tested and function correctly (with valid auth
 | # | Severity | Module | Root Cause | Fix Verified |
 |---|----------|--------|-----------|--------------|
 | 1 | CRITICAL | DB adapter | Turso HTTP: each execute() = new connection, breaks BEGIN/COMMIT | YES |
-| 2 | HIGH | Tunnel | waitForHealth() blocks 180s on unreachable URL | NO |
+| 2 | HIGH | Tunnel | waitForHealth() blocks 180s on unreachable URL | YES |
 | 3 | HIGH | Auth | Middleware JWT secret source differs from route handler | NO |
 | 4 | MEDIUM | Auth | Clerk protect() rewrites to 404 HTML instead of 401 JSON | NO |
 | 5 | HIGH | Providers | Duplicate name silently UPSERTs, overwrites API keys | NO |

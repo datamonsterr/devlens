@@ -500,12 +500,12 @@ export default function APIPageClient({ machineId }) {
     });
   };
 
-  const [baseUrl, setBaseUrl] = useState("/v1");
+  const [baseUrl, setBaseUrl] = useState("/api/v1");
 
   // Hydration fix: Only access window on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setBaseUrl(`${window.location.origin}/v1`);
+      setBaseUrl(`${window.location.origin}/api/v1`);
     }
   }, []);
 
@@ -518,8 +518,8 @@ export default function APIPageClient({ machineId }) {
     );
   }
 
-  const deployedEndpoint = isVercelEndpoint ? (tunnelPublicUrl || baseUrl.replace(/\/v1$/, "")) : "";
-  const currentEndpoint = deployedEndpoint ? `${deployedEndpoint}/v1` : (tunnelPublicUrl || tunnelUrl ? `${tunnelPublicUrl || tunnelUrl}/v1` : baseUrl);
+  const deployedEndpoint = isVercelEndpoint ? (tunnelPublicUrl || baseUrl.replace(/\/api\/v1$/, "")) : "";
+  const currentEndpoint = deployedEndpoint ? `${deployedEndpoint}/api/v1` : (tunnelUrl || tunnelPublicUrl ? `${tunnelUrl || tunnelPublicUrl}/api/v1` : baseUrl);
 
   return (
     <div className="flex flex-col gap-8">
@@ -582,7 +582,7 @@ export default function APIPageClient({ machineId }) {
 
         {isVercelEndpoint && (
           <div className="mt-4 rounded-lg border border-border bg-surface-2 p-4 text-sm text-text-muted">
-            Deployed Vercel endpoint active. Use this URL with your API Key for `/v1/*` requests.
+            Deployed Vercel endpoint active. Use this URL with your API Key for `/api/v1/*` requests.
           </div>
         )}
 

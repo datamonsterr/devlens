@@ -23,7 +23,7 @@ export async function sendDeveloperOnboardingEmail({ email, teamName, inviteUrl,
       inviteUrl,
       signInUrl,
       apiBaseUrl,
-      message: `You have been invited to join ${teamName} on Devlens. Sign in at ${signInUrl || inviteUrl} and use ${apiBaseUrl} for /v1/* API requests.`,
+      message: `You have been invited to join ${teamName} on Devlens. Sign in at ${signInUrl || inviteUrl} and use ${apiBaseUrl} for /api/v1/* API requests.`,
     }),
   });
 

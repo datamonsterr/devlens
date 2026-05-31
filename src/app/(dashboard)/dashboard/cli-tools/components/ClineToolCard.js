@@ -61,11 +61,11 @@ export default function ClineToolCard({ tool, isExpanded, onToggle, baseUrl, api
   const configStatus = getConfigStatus();
 
   const getEffectiveBaseUrl = () => {
-    const url = customBaseUrl || `${baseUrl}/v1`;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    const url = customBaseUrl || `${baseUrl}/api/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
-  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
+  const getDisplayUrl = () => customBaseUrl || `${baseUrl}/api/v1`;
 
   const checkStatus = async () => {
     setChecking(true);
@@ -132,7 +132,7 @@ export default function ClineToolCard({ tool, isExpanded, onToggle, baseUrl, api
       ? selectedApiKey
       : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
     const effectiveUrl = getEffectiveBaseUrl();
-    const baseWithoutV1 = effectiveUrl.endsWith("/v1") ? effectiveUrl.slice(0, -3) : effectiveUrl;
+    const baseWithoutV1 = effectiveUrl.endsWith("/api/v1") ? effectiveUrl.slice(0, -7) : effectiveUrl;
 
     return [
       {

@@ -267,7 +267,7 @@ export default function DashboardHomeClient() {
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-text-subtle">Router tunnel URL</p>
             <p className="mt-2 truncate font-mono text-sm text-text-main">{tunnel?.publicUrl || "Not ready"}</p>
-            <p className="mt-1 text-xs text-text-muted">Use as router base URL for /v1/* requests.</p>
+            <p className="mt-1 text-xs text-text-muted">Use as router base URL for /api/v1/* requests.</p>
           </div>
           {isManager ? (
             <button
@@ -345,7 +345,7 @@ export default function DashboardHomeClient() {
             <QuickLink
               href="/dashboard/endpoint"
               title="API Quickstart"
-              desc="Copy base URL + headers and test /v1/* quickly."
+              desc="Copy base URL + headers and test /api/v1/* quickly."
               icon="rocket_launch"
             />
             <QuickLink

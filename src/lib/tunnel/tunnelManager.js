@@ -39,6 +39,7 @@ const tunnelSvc = {
   spawnInProgress: false,
   lastRestartAt: 0,
   activeLocalPort: null,
+  rateLimitUntil: 0,
 };
 
 export function getTunnelService() { return tunnelSvc; }
@@ -116,6 +117,15 @@ export async function enableTunnel(localPort = 20261) {
   console.log(`[Tunnel] enable start (port=${localPort})`);
   tunnelSvc.cancelToken = { cancelled: false };
   tunnelSvc.activeLocalPort = localPort;
+
+  if (Date.now() < tunnelSvc.rateLimitUntil) {
+    const waitSec = Math.ceil((tunnelSvc.rateLimitUntil - Date.now()) / 1000);
+    const err = new Error(`Cloudflare rate-limited. Retry in ${waitSec}s.`);
+    err.isRateLimit = true;
+    err.retryAfterSec = waitSec;
+    throw err;
+  }
+
   tunnelSvc.spawnInProgress = true;
   const token = tunnelSvc.cancelToken;
 
@@ -165,24 +175,42 @@ export async function enableTunnel(localPort = 20261) {
     console.log(`[Tunnel] spawned: ${tunnelUrl}`);
     throwIfCancelled(token, "tunnel");
 
+    const directHealthy = await probeUrlAlive(tunnelUrl);
+    console.log(`[Tunnel] direct URL ${directHealthy ? "healthy" : "not yet reachable"}`);
+
     const publicUrl = `https://r${shortId}.abc-tunnel.us`;
     await registerTunnelUrl(shortId, tunnelUrl);
     st.saveState({ shortId, tunnelUrl });
     await updateSettings({ tunnelEnabled: true, tunnelUrl });
     console.log(`[Tunnel] registered shortId=${shortId} publicUrl=${publicUrl}`);
 
-    await waitForHealth(publicUrl, token);
-    console.log("[Tunnel] public URL healthy");
-    if (!(await probeUrlAlive(tunnelUrl))) {
-      console.warn("[Tunnel] direct URL not reachable yet, continuing via publicUrl");
-    } else {
-      console.log("[Tunnel] direct URL healthy");
+    let publicHealthy = false;
+    try {
+      publicHealthy = await waitForHealth(publicUrl, token, 15000);
+      console.log("[Tunnel] public URL healthy");
+    } catch (e) {
+      console.warn(`[Tunnel] public URL health check: ${e.message}`);
+    }
+
+    if (!directHealthy && !publicHealthy) {
+      throw new Error("Neither tunnel URL nor public URL is healthy");
     }
 
     console.log("[Tunnel] enable success");
-    return { success: true, tunnelUrl, shortId, publicUrl };
+    return {
+      success: true,
+      tunnelUrl,
+      shortId,
+      publicUrl,
+      directUrl: tunnelUrl,
+      publicHealthy,
+    };
   } catch (e) {
     console.error(`[Tunnel] enable error: ${e.message}`);
+    if (e.isRateLimit) {
+      tunnelSvc.rateLimitUntil = Date.now() + 300000;
+      console.warn(`[Tunnel] rate-limit cooldown set for 5 min`);
+    }
     throw e;
   } finally {
     tunnelSvc.spawnInProgress = false;

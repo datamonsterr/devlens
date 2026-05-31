@@ -10,7 +10,7 @@ const SAVE_VALUE = "__save__";
 const ensureV1 = (url) => {
   const trimmed = (url || "").replace(/\/+$/, "");
   if (!trimmed) return "";
-  return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
+  return /\/api\/v1$/.test(trimmed) ? trimmed : `${trimmed}/api/v1`;
 };
 
 const readSavedPresets = () => {
@@ -29,16 +29,20 @@ const writeSavedPresets = (presets) => {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
 };
 
-const buildOptions = ({ requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1 }) => {
+const buildOptions = ({ requiresExternalUrl, tunnelEnabled, tunnelUrl, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1 }) => {
   const opts = [];
   const wrap = (url) => (withV1 ? ensureV1(url) : (url || "").replace(/\/+$/, ""));
   if (!requiresExternalUrl) {
     const localUrl = wrap(`http://127.0.0.1:${UPDATER_CONFIG.appPort}`);
     opts.push({ value: "local", label: localUrl, url: localUrl });
   }
-  if (tunnelEnabled && tunnelPublicUrl) {
-    const u = wrap(tunnelPublicUrl);
+  if (tunnelEnabled && tunnelUrl) {
+    const u = wrap(tunnelUrl);
     opts.push({ value: "tunnel", label: u, url: u });
+  }
+  if (tunnelEnabled && tunnelPublicUrl && tunnelPublicUrl !== tunnelUrl) {
+    const u = wrap(tunnelPublicUrl);
+    opts.push({ value: "tunnel-public", label: u, url: u });
   }
   if (cloudEnabled && cloudUrl) {
     const u = wrap(cloudUrl);
@@ -56,6 +60,7 @@ export default function BaseUrlSelect({
   onChange,
   requiresExternalUrl = false,
   tunnelEnabled = false,
+  tunnelUrl = "",
   tunnelPublicUrl = "",
   cloudEnabled = false,
   cloudUrl = "",
@@ -71,8 +76,8 @@ export default function BaseUrlSelect({
   }, []);
 
   const options = useMemo(
-    () => buildOptions({ requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1 }),
-    [requiresExternalUrl, tunnelEnabled, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1]
+    () => buildOptions({ requiresExternalUrl, tunnelEnabled, tunnelUrl, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1 }),
+    [requiresExternalUrl, tunnelEnabled, tunnelUrl, tunnelPublicUrl, cloudEnabled, cloudUrl, savedPresets, withV1]
   );
 
   // Always default to first option (127.0.0.1) on mount, ignore persisted value
@@ -159,7 +164,7 @@ export default function BaseUrlSelect({
           type="text"
           value={customInput}
           onChange={handleCustomInput}
-          placeholder={withV1 ? "https://example.com/v1" : "https://example.com"}
+          placeholder={withV1 ? "https://example.com/api/v1" : "https://example.com"}
           className="w-full min-w-0 px-2 py-2 bg-surface rounded border border-border text-xs focus:outline-none focus:ring-1 focus:ring-primary/50 sm:py-1.5"
         />
       )}

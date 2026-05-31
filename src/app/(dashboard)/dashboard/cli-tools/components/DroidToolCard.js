@@ -110,12 +110,12 @@ export default function DroidToolCard({
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
   const getDisplayUrl = () => {
     const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return url.endsWith("/api/v1") ? url : `${url}/api/v1`;
   };
 
   const addModel = () => {

@@ -62,9 +62,11 @@ async function hasDashboardSession(req: Request) {
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return;
-  const userId = auth.userId;
+  const { userId: clerkUserId } = await auth();
   const hasSession = await hasDashboardSession(req);
-  if (!userId && !hasSession) {
+  const cookieNames = (req.headers.get("cookie") || "").split(";").map(c => c.trim().split("=")[0]).filter(Boolean);
+  console.log(`[AUTH] ${req.method} ${req.nextUrl.pathname} | clerkUserId=${clerkUserId || "none"} | auth_token=${hasSession} | cookies=[${cookieNames.join(",")}]`);
+  if (!clerkUserId && !hasSession) {
     if (req.nextUrl.pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

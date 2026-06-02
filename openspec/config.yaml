@@ -1,20 +1,83 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  ## Devlens — Centralized B2B AI Access Platform
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+  **Tech stack**: Node.js 22, Next.js 16 (App Router), React 19, Tailwind CSS v4, pnpm 10
+  **Auth**: Clerk (Orgs→Teams), custom HMAC JWT dashboard session, HMAC API Keys for /v1/*
+  **Database**: SQLite with multi-driver chain (libSQL/Turso, bun:sqlite, better-sqlite3, node:sqlite, sql.js)
+  **Deploy**: Vercel (production, Turso required), Docker Compose (local), Cloudflare Pages (docs)
+  **Runtime**: Node 22 minimum, Bun supported via dev:bun/build:bun scripts
+  **Package manager**: pnpm only (never npm/npx), use `pnpm dlx` not `npx`
+
+  ## Domain Language (from CONTEXT.md)
+
+  - **Team**: Clerk Organization mapped 1:1 to Devlens team. Owns all resources.
+  - **Manager**: Team admin — configures providers/combos/pricing/RTK, invites developers, views analytics. Dashboard-only.
+  - **Developer**: Team member — creates API keys, browses models, uses /v1/* API. Cannot modify team config.
+  - **API Key**: Per-developer HMAC-hashed credential, plaintext shown once on creation.
+  - **Provider Connection**: Configured upstream AI provider with credentials, priority, team-scoped.
+  - **Combo**: Ordered fallback sequence of models. First available wins.
+  - **RTK Pool**: Team-level token savings budget, atomically decremented during streaming.
+  - **Model Alias**: Short name mapped to model string.
+  - **Pricing Override**: Manager-defined per-model cost. Manual wins over auto.
+  - **CLI Config Snippet**: Copyable env/JSON config for Claude Code, OpenCode, Codex.
+
+  ## Architecture
+
+  - Next.js App Router with Clerk middleware for dashboard auth
+  - OpenAI-compatible /v1/* API proxy with provider translation via open-sse/ engine
+  - 20+ upstream AI providers supported via executor/translator adapters
+  - Combo fallback: model → provider → account → next provider → next model
+  - SSE streaming with RTK compression, usage tracking per request
+  - Team-scoped RBAC: Manager vs Developer enforced at API + UI levels
+  - Multi-driver SQLite with Turso for Vercel production, local fallback for dev
+  - Declarative schema + versioned migrations with Turso distributed locking
+
+  ## Ports
+
+  - App dev: 20262 (next dev)
+  - Docker: 20261
+  - GitBook docs: 3001
+
+  ## Conventions
+
+  - Always create worktree under ./worktrees/ before implementation
+  - Read docs/ living specs before any proposal or implementation
+  - OpenSpec decisions win over 9router residue when code and docs disagree
+  - Update living specs after behavior, schema, route, or auth changes
+  - Use conventional commits
+  - No emojis in code or docs unless user explicitly requests
+  - Keep docs concise and navigable
+  - Agent flow: context → specs → worktree → implement → verify → sync specs
+  - Use `.opencode/agents/living-spec-reader.md` before work
+  - Use `.opencode/agents/living-spec-syncer.md` after work
+  - Read `.opencode/slop/` before implementation to avoid known mistakes
+
+  ## Current Active Changes
+  - devlens-platform: Foundational 9Router→Devlens migration (nearly complete, 3 tasks left)
+  - fix-rbac-and-invitation-security: RBAC audit fixes (proposed, not started)
+
+  ## Future Features (not yet started)
+  - All OAuth providers with Devlens client IDs
+  - Manager chatbot with AI SDK + tool calls
+  - Platform-specific CLI setup guides (Linux, Windows, Mac)
+  - Remove all 9router brand references from repo
+  - Compact UI redesign
+  - API latency reduction
+  - CI/CD: automated test, format, lint, code review
+  - Vercel feature flags + customizable settings page
+  - Onboarding email for team manager inviting developers
+  - GitBook documentation update
+
+rules:
+  proposal:
+    - Keep proposals concise, target 1 page
+    - Always include Motivation, Scope, Non-goals, and Impact sections
+    - Link to relevant docs/ feature specs
+    - Use domain language from CONTEXT.md
+  tasks:
+    - Break tasks into chunks of max 1 hour
+    - Each task must have clear completion criteria
+    - Include verification steps (build, lint, test)
+    - Reorder tasks so critical path comes first

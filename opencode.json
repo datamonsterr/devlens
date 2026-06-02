@@ -3,7 +3,6 @@
   "instructions": ["CONTEXT.md", "docs/"],
   "permission": {
     "edit": "allow",
-    "bash": "allow",
-    "additionalDirectories": ["/tmp/opencode"]
+    "bash": "allow"
   }
 }

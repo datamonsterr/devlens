@@ -164,10 +164,10 @@ export default function DashboardLayout({ children }) {
         <Header key={pathname} onMenuClick={() => setSidebarOpen(true)} />
         <div
           className={`flex-1 overflow-y-auto custom-scrollbar ${
-            pathname === "/dashboard/basic-chat" ? "" : "px-4 pb-8 pt-5 sm:px-6 lg:px-10"
-          } ${pathname === "/dashboard/basic-chat" ? "flex flex-col overflow-hidden" : ""}`}
+            (pathname === "/dashboard/basic-chat" || pathname === "/dashboard/chatbot") ? "" : "px-4 pb-8 pt-5 sm:px-6 lg:px-10"
+          } ${(pathname === "/dashboard/basic-chat" || pathname === "/dashboard/chatbot") ? "flex flex-col overflow-hidden" : ""}`}
         >
-          <div className={`${pathname === "/dashboard/basic-chat" ? "flex-1 w-full h-full flex flex-col" : "mx-auto w-full max-w-[1240px]"}`}>
+          <div className={`${(pathname === "/dashboard/basic-chat" || pathname === "/dashboard/chatbot") ? "flex-1 w-full h-full flex flex-col" : "mx-auto w-full max-w-[1240px]"}`}>
             {children}
           </div>
         </div>

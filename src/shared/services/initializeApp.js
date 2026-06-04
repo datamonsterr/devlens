@@ -66,8 +66,19 @@ export async function initializeApp() {
 
     startWatchdog();
     startNetworkMonitor();
+
+    discoverChatbotSkills().catch((e) => console.warn("[InitApp] Chatbot skills not loaded:", e.message));
   } catch (error) {
     console.error("[InitApp] Error:", error);
+  }
+}
+
+async function discoverChatbotSkills() {
+  try {
+    const { discoverSkills } = await import('@/chatbot/skillRegistry.js');
+    await discoverSkills();
+  } catch (e) {
+    console.warn('[InitApp] Failed to discover chatbot skills:', e.message);
   }
 }
 

@@ -10,10 +10,15 @@ function loadJwtSecret() {
   try {
     return fs.readFileSync(file, "utf8").trim();
   } catch {}
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  const generated = crypto.randomBytes(32).toString("hex");
-  fs.writeFileSync(file, generated, { mode: 0o600 });
-  return generated;
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+    const generated = crypto.randomBytes(32).toString("hex");
+    fs.writeFileSync(file, generated, { mode: 0o600 });
+    return generated;
+  } catch (e) {
+    console.warn("[auth] cannot persist jwt-secret, using ephemeral fallback:", e?.message);
+    return crypto.randomBytes(32).toString("hex");
+  }
 }
 
 const SECRET = new TextEncoder().encode(loadJwtSecret());

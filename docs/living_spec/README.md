@@ -1,18 +1,31 @@
-# Living specs
+# Living Specs (Legacy Index)
 
-`docs/living_spec/` is source of truth for Devlens product and technical direction.
+`docs/living_spec/` is the legacy index for Devlens living specs.
 
-## Rules
+## Docs have been restructured
 
-- Read `docs/living_spec/features.md`, relevant `docs/living_spec/feature_spec/*.md`, and relevant `docs/living_spec/technical_spec/*.md` before proposals or implementation.
+Feature specs and technical docs now live in per-feature folders under `docs/`:
+
+```
+docs/
+  README.md              ← Start here for navigation
+  clerk-auth/            ← feature_spec.md + technical.md
+  cli-config-snippets/   ← feature_spec.md + technical.md
+  combos/                ← feature_spec.md + technical.md
+  ...
+```
+
+Cross-cutting technical specs are at `docs/` root:
+- `docs/architecture.md`
+- `docs/database-schema.md`
+- `docs/sse-routing-core.md`
+- etc.
+
+See [docs/README.md](../README.md) for full documentation map.
+
+## Rules (unchanged)
+
+- Read relevant `docs/{feature}/feature_spec.md` and `docs/{feature}/technical.md` before proposals or implementation.
 - OpenSpec wins over current code when documenting migration direction.
-- Code wins only for current-state inventory.
-- Update living specs after each accepted proposal or implementation that changes product behavior, architecture, schema, routes, auth, or agent workflow.
+- Update specs after each accepted proposal or implementation.
 - Keep specs synced with `CONTEXT.md` domain language.
-
-## Index
-
-- Feature overview: `docs/living_spec/features.md`
-- Feature specs: `docs/living_spec/feature_spec/`
-- Technical specs: `docs/living_spec/technical_spec/`
-- ADRs: `docs/living_spec/adr/`

@@ -52,9 +52,7 @@ data/
 logs/*
 source/*
 .cursor/*
-docs/*
-!docs/ARCHITECTURE.md
-!docs/sqlite-to-turso.md
+# docs/ is fully tracked — living specs, architecture, feature specs
 test/*
 open-sse/test/*
 RM.vn.md
